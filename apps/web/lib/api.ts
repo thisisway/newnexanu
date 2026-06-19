@@ -1,0 +1,79 @@
+import axios, { type AxiosError, type AxiosInstance } from 'axios'
+import type { ApiError } from '@/types'
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+
+export const api: AxiosInstance = axios.create({
+  baseURL: `${BASE_URL}/api/v1`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+})
+
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('nexano_token')
+    const orgId = localStorage.getItem('nexano_org_id')
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    if (orgId) {
+      config.headers['X-Organization-Id'] = orgId
+    }
+  }
+  return config
+})
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError<ApiError>) => {
+    const originalRequest = error.config as typeof error.config & { _retry?: boolean }
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+
+      try {
+        const refreshToken = localStorage.getItem('nexano_refresh_token')
+        if (!refreshToken) {
+          clearAuthStorage()
+          window.location.href = '/login'
+          return Promise.reject(error)
+        }
+
+        const { data } = await axios.post(`${BASE_URL}/api/v1/auth/refresh`, { refreshToken })
+        const newToken = data.data?.accessToken || data.accessToken
+        const newRefreshToken = data.data?.refreshToken || data.refreshToken
+
+        localStorage.setItem('nexano_token', newToken)
+        localStorage.setItem('nexano_refresh_token', newRefreshToken)
+
+        originalRequest.headers!.Authorization = `Bearer ${newToken}`
+        return api(originalRequest)
+      } catch {
+        clearAuthStorage()
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+    }
+
+    return Promise.reject(error)
+  },
+)
+
+function clearAuthStorage() {
+  localStorage.removeItem('nexano_token')
+  localStorage.removeItem('nexano_refresh_token')
+  localStorage.removeItem('nexano_user')
+  localStorage.removeItem('nexano_org_id')
+}
+
+export function getErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const apiError = error.response?.data as ApiError
+    return apiError?.error?.message || 'Ocorreu um erro inesperado.'
+  }
+  if (error instanceof Error) return error.message
+  return 'Ocorreu um erro inesperado.'
+}

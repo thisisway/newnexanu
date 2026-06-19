@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Nexano Design Tokens ──────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* ── Background & Surface ──────────────────────── */
+    --background: 210 40% 98%;       /* #F8FAFC */
+    --foreground: 222 47% 11%;       /* #0F172A */
+
+    --card: 0 0% 100%;               /* #FFFFFF */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* ── Primary (Nexano Purple) ────────────────────── */
+    --primary: 244 100% 68%;         /* #635BFF */
+    --primary-foreground: 0 0% 100%;
+
+    /* ── Secondary / Muted ─────────────────────────── */
+    --secondary: 210 40% 96.1%;      /* #F1F5F9 */
+    --secondary-foreground: 215 25% 27%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215 16% 47%; /* #64748B */
+
+    /* ── Accent ─────────────────────────────────────── */
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222 47% 11%;
+
+    /* ── Destructive ────────────────────────────────── */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Border & Input ─────────────────────────────── */
+    --border: 220 13% 91%;           /* #E5E7EB */
+    --input: 220 13% 91%;
+    --ring: 244 100% 68%;
+
+    /* ── Radius ─────────────────────────────────────── */
+    --radius: 0.75rem;
+
+    /* ── Sidebar (Light) ────────────────────────────── */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 244 100% 68%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 244 100% 68%;
+  }
+
+  .dark {
+    /* ── Background & Surface ──────────────────────── */
+    --background: 222 63% 5%;        /* #070A12 */
+    --foreground: 210 40% 98%;       /* #F8FAFC */
+
+    --card: 222 47% 11%;             /* #0F172A */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    /* ── Primary (Nexano Purple) ────────────────────── */
+    --primary: 244 100% 68%;
+    --primary-foreground: 0 0% 100%;
+
+    /* ── Secondary / Muted ─────────────────────────── */
+    --secondary: 217 33% 18%;        /* #1F2937 */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 65%; /* #94A3B8 */
+
+    /* ── Accent ─────────────────────────────────────── */
+    --accent: 217 33% 18%;
+    --accent-foreground: 210 40% 98%;
+
+    /* ── Destructive ────────────────────────────────── */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* ── Border & Input ─────────────────────────────── */
+    --border: 215 28% 17%;           /* #1F2937 */
+    --input: 215 28% 17%;
+    --ring: 244 100% 68%;
+
+    /* ── Sidebar (Dark) ─────────────────────────────── */
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 244 100% 68%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 28% 17%;
+    --sidebar-ring: 244 100% 68%;
+  }
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  h1 {
+    @apply scroll-m-20 text-h1 font-bold tracking-tight;
+  }
+  h2 {
+    @apply scroll-m-20 text-h2 font-semibold tracking-tight;
+  }
+  h3 {
+    @apply scroll-m-20 text-h3 font-semibold tracking-tight;
+  }
+
+  p {
+    @apply text-body leading-relaxed;
+  }
+
+  /* Focus visible — acessibilidade */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Scrollbar personalizada */
+  ::-webkit-scrollbar {
+    @apply w-[6px] h-[6px];
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
+
+/* ─── Utility Classes ─────────────────────────────────────────────────────── */
+
+@layer utilities {
+  /* Texto gradiente Nexano */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
+  }
+
+  /* Card com hover */
+  .card-hover {
+    @apply transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  /* Truncate multi-linha */
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  /* Sidebar transition */
+  .sidebar-transition {
+    @apply transition-all duration-200 ease-in-out;
+  }
+}
+
+/* ─── Skeleton pulse animation ──────────────────────────────────────────── */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.skeleton {
+  animation: skeleton-pulse 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  @apply bg-muted rounded;
+}

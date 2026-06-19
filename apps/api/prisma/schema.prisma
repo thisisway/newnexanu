@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Organizations ──────────────────────────────────────────────────────────
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  domain      String?  @unique
+  logoUrl     String?
+  plan        String   @default("starter")
+  status      OrgStatus @default(ACTIVE)
+  settings    Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  users       OrganizationUser[]
+  roles       Role[]
+  auditLogs   AuditLog[]
+
+  @@map("organizations")
+}
+
+enum OrgStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+
+  @@map("org_status")
+}
+
+// ─── Users ────────────────────────────────────────────────────────────────
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String
+  passwordHash      String
+  avatarUrl         String?
+  phone             String?
+  emailVerifiedAt   DateTime?
+  twoFactorSecret   String?
+  twoFactorEnabled  Boolean   @default(false)
+  status            UserStatus @default(ACTIVE)
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  organizations     OrganizationUser[]
+  sessions          Session[]
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+
+  @@map("user_status")
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────
+
+model Session {
+  id            String    @id @default(cuid())
+  userId        String
+  refreshToken  String    @unique
+  ip            String?
+  userAgent     String?
+  expiresAt     DateTime
+  createdAt     DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ─── Organization Users (multi-tenant membership) ─────────────────────────
+
+model OrganizationUser {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  roleId         String?
+  status         MemberStatus @default(ACTIVE)
+  invitedByUserId String?
+  joinedAt       DateTime  @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           Role?        @relation(fields: [roleId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("organization_users")
+}
+
+enum MemberStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+
+  @@map("member_status")
+}
+
+// ─── Roles & Permissions (RBAC) ───────────────────────────────────────────
+
+model Role {
+  id             String    @id @default(cuid())
+  organizationId String?
+  name           String
+  slug           String
+  description    String?
+  isSystem       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization   Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    RolePermission[]
+  members        OrganizationUser[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  action      String   @unique
+  description String?
+  module      String
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ─── Audit Logs ───────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String    @id @default(cuid())
+  organizationId String?
+  userId         String?
+  action         String
+  entity         String?
+  entityId       String?
+  before         Json?
+  after          Json?
+  metadata       Json?
+  ip             String?
+  userAgent      String?
+  severity       AuditSeverity @default(INFO)
+  createdAt      DateTime  @default(now())
+
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum AuditSeverity {
+  INFO
+  WARNING
+  CRITICAL
+
+  @@map("audit_severity")
+}
