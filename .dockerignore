@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/.env
+**/.env.local
+**/coverage
+**/*.log
+.git
+.gitignore
+README.md

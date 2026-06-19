@@ -10,20 +10,25 @@ datasource db {
 // ─── Organizations ──────────────────────────────────────────────────────────
 
 model Organization {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
-  slug        String   @unique
-  domain      String?  @unique
+  slug        String    @unique
+  domain      String?   @unique
   logoUrl     String?
-  plan        String   @default("starter")
+  plan        String    @default("starter")
   status      OrgStatus @default(ACTIVE)
   settings    Json      @default("{}")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  users       OrganizationUser[]
-  roles       Role[]
-  auditLogs   AuditLog[]
+  users            OrganizationUser[]
+  roles            Role[]
+  auditLogs        AuditLog[]
+  clients          Client[]
+  productCategories ProductCategory[]
+  products         Product[]
+  plans            Plan[]
+  addons           Addon[]
 
   @@map("organizations")
 }
@@ -39,24 +44,25 @@ enum OrgStatus {
 // ─── Users ────────────────────────────────────────────────────────────────
 
 model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  name              String
-  passwordHash      String
-  avatarUrl         String?
-  phone             String?
-  emailVerifiedAt   DateTime?
-  twoFactorSecret   String?
-  twoFactorEnabled  Boolean   @default(false)
-  status            UserStatus @default(ACTIVE)
-  lastLoginAt       DateTime?
-  lastLoginIp       String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id               String     @id @default(cuid())
+  email            String     @unique
+  name             String
+  passwordHash     String
+  avatarUrl        String?
+  phone            String?
+  emailVerifiedAt  DateTime?
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean    @default(false)
+  status           UserStatus @default(ACTIVE)
+  lastLoginAt      DateTime?
+  lastLoginIp      String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
-  organizations     OrganizationUser[]
-  sessions          Session[]
-  auditLogs         AuditLog[]
+  organizations OrganizationUser[]
+  sessions      Session[]
+  auditLogs     AuditLog[]
+  clientNotes   ClientNote[]
 
   @@map("users")
 }
@@ -72,13 +78,13 @@ enum UserStatus {
 // ─── Sessions ─────────────────────────────────────────────────────────────
 
 model Session {
-  id            String    @id @default(cuid())
-  userId        String
-  refreshToken  String    @unique
-  ip            String?
-  userAgent     String?
-  expiresAt     DateTime
-  createdAt     DateTime  @default(now())
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  ip           String?
+  userAgent    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -89,17 +95,17 @@ model Session {
 // ─── Organization Users (multi-tenant membership) ─────────────────────────
 
 model OrganizationUser {
-  id             String    @id @default(cuid())
-  organizationId String
-  userId         String
-  roleId         String?
-  status         MemberStatus @default(ACTIVE)
+  id              String       @id @default(cuid())
+  organizationId  String
+  userId          String
+  roleId          String?
+  status          MemberStatus @default(ACTIVE)
   invitedByUserId String?
-  joinedAt       DateTime  @default(now())
+  joinedAt        DateTime     @default(now())
 
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role           Role?        @relation(fields: [roleId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role         Role?        @relation(fields: [roleId], references: [id])
 
   @@unique([organizationId, userId])
   @@index([organizationId])
@@ -118,18 +124,18 @@ enum MemberStatus {
 // ─── Roles & Permissions (RBAC) ───────────────────────────────────────────
 
 model Role {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   organizationId String?
   name           String
   slug           String
   description    String?
-  isSystem       Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  isSystem       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  organization   Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  permissions    RolePermission[]
-  members        OrganizationUser[]
+  organization Organization?      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions  RolePermission[]
+  members      OrganizationUser[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -137,8 +143,8 @@ model Role {
 }
 
 model Permission {
-  id          String   @id @default(cuid())
-  action      String   @unique
+  id          String @id @default(cuid())
+  action      String @unique
   description String?
   module      String
 
@@ -161,7 +167,7 @@ model RolePermission {
 // ─── Audit Logs ───────────────────────────────────────────────────────────
 
 model AuditLog {
-  id             String    @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String?
   userId         String?
   action         String
@@ -173,10 +179,10 @@ model AuditLog {
   ip             String?
   userAgent      String?
   severity       AuditSeverity @default(INFO)
-  createdAt      DateTime  @default(now())
+  createdAt      DateTime      @default(now())
 
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  user           User?         @relation(fields: [userId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
 
   @@index([organizationId])
   @@index([userId])
@@ -191,4 +197,264 @@ enum AuditSeverity {
   CRITICAL
 
   @@map("audit_severity")
+}
+
+// ─── Clients ──────────────────────────────────────────────────────────────
+
+model Client {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  email          String
+  document       String?
+  documentType   DocumentType?
+  phone          String?
+  mobile         String?
+  type           ClientType   @default(INDIVIDUAL)
+  status         ClientStatus @default(ACTIVE)
+  notes          String?
+  address        Json?
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts     ClientContact[]
+  clientNotes  ClientNote[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([status])
+  @@map("clients")
+}
+
+enum ClientType {
+  INDIVIDUAL
+  COMPANY
+
+  @@map("client_type")
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  CANCELLED
+
+  @@map("client_status")
+}
+
+enum DocumentType {
+  CPF
+  CNPJ
+  OTHER
+
+  @@map("document_type")
+}
+
+model ClientContact {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  email     String?
+  phone     String?
+  role      String?
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("client_contacts")
+}
+
+model ClientNote {
+  id         String   @id @default(cuid())
+  clientId   String
+  userId     String
+  content    String
+  isInternal Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([clientId])
+  @@map("client_notes")
+}
+
+// ─── Product Categories ───────────────────────────────────────────────────
+
+model ProductCategory {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  icon           String?
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  products     Product[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("product_categories")
+}
+
+// ─── Products ─────────────────────────────────────────────────────────────
+
+model Product {
+  id             String        @id @default(cuid())
+  organizationId String
+  categoryId     String?
+  name           String
+  slug           String
+  description    String?
+  type           ProductType   @default(SERVICE)
+  status         ProductStatus @default(ACTIVE)
+  features       Json?
+  metadata       Json          @default("{}")
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category     ProductCategory? @relation(fields: [categoryId], references: [id])
+  plans        Plan[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([status])
+  @@map("products")
+}
+
+enum ProductType {
+  HOSTING
+  VPS
+  DOMAIN
+  SSL
+  EMAIL
+  CLOUD_APP
+  SERVICE
+  OTHER
+
+  @@map("product_type")
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  HIDDEN
+
+  @@map("product_status")
+}
+
+// ─── Plans ────────────────────────────────────────────────────────────────
+
+model Plan {
+  id             String     @id @default(cuid())
+  organizationId String
+  productId      String
+  name           String
+  slug           String
+  description    String?
+  status         PlanStatus @default(ACTIVE)
+  features       Json?
+  limits         Json?
+  metadata       Json       @default("{}")
+  sortOrder      Int        @default(0)
+  isPopular      Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  prices       PlanPrice[]
+  addons       Addon[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@index([productId])
+  @@map("plans")
+}
+
+enum PlanStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+
+  @@map("plan_status")
+}
+
+model PlanPrice {
+  id        String       @id @default(cuid())
+  planId    String
+  currency  String       @default("BRL")
+  cycle     BillingCycle
+  amount    Decimal      @db.Decimal(10, 2)
+  setupFee  Decimal      @default(0) @db.Decimal(10, 2)
+  trialDays Int          @default(0)
+  isDefault Boolean      @default(false)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, currency, cycle])
+  @@index([planId])
+  @@map("plan_prices")
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  SEMIANNUAL
+  ANNUAL
+  BIANNUAL
+  ONE_TIME
+
+  @@map("billing_cycle")
+}
+
+// ─── Addons ───────────────────────────────────────────────────────────────
+
+model Addon {
+  id             String      @id @default(cuid())
+  organizationId String
+  planId         String?
+  name           String
+  description    String?
+  type           AddonType   @default(ONE_TIME)
+  price          Decimal     @db.Decimal(10, 2)
+  setupFee       Decimal     @default(0) @db.Decimal(10, 2)
+  status         AddonStatus @default(ACTIVE)
+  metadata       Json        @default("{}")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan?        @relation(fields: [planId], references: [id])
+
+  @@index([organizationId])
+  @@index([planId])
+  @@map("addons")
+}
+
+enum AddonType {
+  ONE_TIME
+  RECURRING
+
+  @@map("addon_type")
+}
+
+enum AddonStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("addon_status")
 }

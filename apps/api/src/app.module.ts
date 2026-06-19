@@ -8,6 +8,9 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
 import { UsersModule } from './modules/users/users.module'
 import { RolesModule } from './modules/roles/roles.module'
 import { AuditModule } from './modules/audit/audit.module'
+import { ClientsModule } from './modules/clients/clients.module'
+import { ProductsModule } from './modules/products/products.module'
+import { PlansModule } from './modules/plans/plans.module'
 
 @Module({
   imports: [
@@ -16,21 +19,9 @@ import { AuditModule } from './modules/audit/audit.module'
       load: [configuration],
     }),
     ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 1000,
-        limit: 10,
-      },
-      {
-        name: 'medium',
-        ttl: 10000,
-        limit: 50,
-      },
-      {
-        name: 'long',
-        ttl: 60000,
-        limit: 200,
-      },
+      { name: 'short', ttl: 1000, limit: 10 },
+      { name: 'medium', ttl: 10000, limit: 50 },
+      { name: 'long', ttl: 60000, limit: 200 },
     ]),
     PrismaModule,
     AuthModule,
@@ -38,6 +29,9 @@ import { AuditModule } from './modules/audit/audit.module'
     UsersModule,
     RolesModule,
     AuditModule,
+    ClientsModule,
+    ProductsModule,
+    PlansModule,
   ],
 })
 export class AppModule implements NestModule {

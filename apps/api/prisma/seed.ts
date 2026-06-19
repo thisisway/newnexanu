@@ -19,39 +19,43 @@ const PERMISSIONS = [
 
   // Clients
   { action: 'clients:read', module: 'clients', description: 'Ver clientes' },
-  { action: 'clients:write', module: 'clients', description: 'Criar e editar clientes' },
+  { action: 'clients:create', module: 'clients', description: 'Criar clientes' },
+  { action: 'clients:update', module: 'clients', description: 'Editar clientes' },
   { action: 'clients:delete', module: 'clients', description: 'Excluir clientes' },
   { action: 'clients:impersonate', module: 'clients', description: 'Acessar como cliente' },
 
   // Products
-  { action: 'products:read', module: 'products', description: 'Ver produtos' },
-  { action: 'products:write', module: 'products', description: 'Criar e editar produtos' },
-  { action: 'products:delete', module: 'products', description: 'Excluir produtos' },
+  { action: 'products:read', module: 'products', description: 'Ver produtos e planos' },
+  { action: 'products:create', module: 'products', description: 'Criar produtos e planos' },
+  { action: 'products:update', module: 'products', description: 'Editar produtos e planos' },
+  { action: 'products:delete', module: 'products', description: 'Excluir produtos e planos' },
 
   // Orders
   { action: 'orders:read', module: 'orders', description: 'Ver pedidos' },
-  { action: 'orders:write', module: 'orders', description: 'Gerenciar pedidos' },
+  { action: 'orders:create', module: 'orders', description: 'Criar pedidos' },
+  { action: 'orders:update', module: 'orders', description: 'Gerenciar pedidos' },
   { action: 'orders:cancel', module: 'orders', description: 'Cancelar pedidos' },
 
   // Invoices
   { action: 'invoices:read', module: 'invoices', description: 'Ver faturas' },
-  { action: 'invoices:write', module: 'invoices', description: 'Criar e editar faturas' },
+  { action: 'invoices:create', module: 'invoices', description: 'Criar faturas' },
+  { action: 'invoices:update', module: 'invoices', description: 'Editar faturas' },
   { action: 'invoices:cancel', module: 'invoices', description: 'Cancelar faturas' },
   { action: 'invoices:refund', module: 'invoices', description: 'Emitir reembolsos' },
 
   // Payments
   { action: 'payments:read', module: 'payments', description: 'Ver pagamentos' },
-  { action: 'payments:write', module: 'payments', description: 'Gerenciar pagamentos' },
+  { action: 'payments:manage', module: 'payments', description: 'Gerenciar pagamentos' },
 
   // Services
   { action: 'services:read', module: 'services', description: 'Ver serviços' },
-  { action: 'services:write', module: 'services', description: 'Gerenciar serviços' },
+  { action: 'services:manage', module: 'services', description: 'Gerenciar serviços' },
   { action: 'services:suspend', module: 'services', description: 'Suspender serviços' },
   { action: 'services:terminate', module: 'services', description: 'Encerrar serviços' },
 
   // Domains
   { action: 'domains:read', module: 'domains', description: 'Ver domínios' },
-  { action: 'domains:write', module: 'domains', description: 'Gerenciar domínios' },
+  { action: 'domains:manage', module: 'domains', description: 'Gerenciar domínios' },
 
   // Support
   { action: 'support:read', module: 'support', description: 'Ver tickets de suporte' },
@@ -72,11 +76,11 @@ const PERMISSIONS = [
 
   // Settings
   { action: 'settings:read', module: 'settings', description: 'Ver configurações' },
-  { action: 'settings:write', module: 'settings', description: 'Editar configurações' },
+  { action: 'settings:manage', module: 'settings', description: 'Editar configurações' },
 
   // Automations
   { action: 'automations:read', module: 'automations', description: 'Ver automações' },
-  { action: 'automations:write', module: 'automations', description: 'Criar e editar automações' },
+  { action: 'automations:manage', module: 'automations', description: 'Criar e editar automações' },
   { action: 'automations:execute', module: 'automations', description: 'Executar automações' },
 ]
 
@@ -101,15 +105,10 @@ const SYSTEM_ROLES = [
     description: 'Gerencia cobranças, faturas e pagamentos',
     permissions: [
       'clients:read',
-      'invoices:read',
-      'invoices:write',
-      'invoices:cancel',
-      'invoices:refund',
-      'payments:read',
-      'payments:write',
+      'invoices:read', 'invoices:create', 'invoices:update', 'invoices:cancel', 'invoices:refund',
+      'payments:read', 'payments:manage',
       'orders:read',
-      'reports:read',
-      'reports:export',
+      'reports:read', 'reports:export',
     ],
   },
   {
@@ -121,9 +120,7 @@ const SYSTEM_ROLES = [
       'services:read',
       'invoices:read',
       'orders:read',
-      'support:read',
-      'support:reply',
-      'support:close',
+      'support:read', 'support:reply', 'support:close',
       'domains:read',
     ],
   },
@@ -133,15 +130,10 @@ const SYSTEM_ROLES = [
     description: 'Gerencia serviços e infraestrutura',
     permissions: [
       'clients:read',
-      'services:read',
-      'services:write',
-      'services:suspend',
-      'domains:read',
-      'domains:write',
-      'support:read',
-      'support:reply',
-      'integrations:read',
-      'integrations:manage',
+      'services:read', 'services:manage', 'services:suspend',
+      'domains:read', 'domains:manage',
+      'support:read', 'support:reply',
+      'integrations:read', 'integrations:manage',
     ],
   },
   {
@@ -149,11 +141,9 @@ const SYSTEM_ROLES = [
     slug: 'commercial',
     description: 'Gerencia clientes, pedidos e produtos',
     permissions: [
-      'clients:read',
-      'clients:write',
+      'clients:read', 'clients:create', 'clients:update',
       'products:read',
-      'orders:read',
-      'orders:write',
+      'orders:read', 'orders:create', 'orders:update',
       'invoices:read',
       'reports:read',
       'support:read',
@@ -179,6 +169,7 @@ const SYSTEM_ROLES = [
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...\n')
 
+  // ─── Permissions ───────────────────────────────────────────────────────────
   console.log('📋 Criando permissões...')
   for (const perm of PERMISSIONS) {
     await prisma.permission.upsert({
@@ -189,21 +180,15 @@ async function main() {
   }
   console.log(`   ✅ ${PERMISSIONS.length} permissões criadas.\n`)
 
+  // ─── System Roles ──────────────────────────────────────────────────────────
   console.log('🎭 Criando papéis do sistema...')
   for (const roleData of SYSTEM_ROLES) {
     const { permissions, ...roleInfo } = roleData
 
     const role = await prisma.role.upsert({
       where: { organizationId_slug: { organizationId: '', slug: roleInfo.slug } },
-      create: {
-        ...roleInfo,
-        isSystem: true,
-        organizationId: null,
-      },
-      update: {
-        name: roleInfo.name,
-        description: roleInfo.description,
-      },
+      create: { ...roleInfo, isSystem: true, organizationId: null },
+      update: { name: roleInfo.name, description: roleInfo.description },
     })
 
     await prisma.rolePermission.deleteMany({ where: { roleId: role.id } })
@@ -222,7 +207,8 @@ async function main() {
     console.log(`   ✅ Papel "${roleInfo.name}" — ${permissions.length} permissões`)
   }
 
-  console.log('\n👤 Criando usuário admin de desenvolvimento...')
+  // ─── Dev User & Org ────────────────────────────────────────────────────────
+  console.log('\n👤 Criando usuário e organização de desenvolvimento...')
   const devUser = await prisma.user.upsert({
     where: { email: 'admin@nexano.dev' },
     create: {
@@ -237,39 +223,172 @@ async function main() {
 
   const devOrg = await prisma.organization.upsert({
     where: { slug: 'nexano-dev' },
-    create: {
-      name: 'Nexano (Dev)',
-      slug: 'nexano-dev',
-      plan: 'enterprise',
-      status: 'ACTIVE',
-    },
+    create: { name: 'Nexano (Dev)', slug: 'nexano-dev', plan: 'enterprise', status: 'ACTIVE' },
     update: {},
   })
 
-  const ownerRole = await prisma.role.findFirst({
-    where: { slug: 'owner', isSystem: true },
-  })
+  const ownerRole = await prisma.role.findFirst({ where: { slug: 'owner', isSystem: true } })
 
   await prisma.organizationUser.upsert({
-    where: {
-      organizationId_userId: {
-        organizationId: devOrg.id,
-        userId: devUser.id,
-      },
-    },
-    create: {
-      organizationId: devOrg.id,
-      userId: devUser.id,
-      roleId: ownerRole?.id,
-      status: 'ACTIVE',
-    },
+    where: { organizationId_userId: { organizationId: devOrg.id, userId: devUser.id } },
+    create: { organizationId: devOrg.id, userId: devUser.id, roleId: ownerRole?.id, status: 'ACTIVE' },
     update: {},
   })
 
-  console.log('   ✅ Usuário admin@nexano.dev criado (senha: nexano@123)')
-  console.log(`   ✅ Organização "Nexano (Dev)" criada (slug: nexano-dev)\n`)
+  console.log('   ✅ admin@nexano.dev (senha: nexano@123)')
+  console.log(`   ✅ Organização "Nexano (Dev)" (slug: nexano-dev)\n`)
 
-  console.log('🎉 Seed concluído com sucesso!')
+  // ─── Sample Clients ────────────────────────────────────────────────────────
+  console.log('👥 Criando clientes de exemplo...')
+  const sampleClients = [
+    { name: 'João Silva', email: 'joao@empresa.com.br', document: '123.456.789-00', documentType: 'CPF' as const, type: 'INDIVIDUAL' as const, phone: '(11) 99999-0001', status: 'ACTIVE' as const },
+    { name: 'TechBrasil Ltda', email: 'contato@techbrasil.com.br', document: '12.345.678/0001-90', documentType: 'CNPJ' as const, type: 'COMPANY' as const, phone: '(11) 3333-0001', status: 'ACTIVE' as const },
+    { name: 'Maria Souza', email: 'maria@hotmail.com', document: '987.654.321-00', documentType: 'CPF' as const, type: 'INDIVIDUAL' as const, phone: '(21) 98888-0002', status: 'ACTIVE' as const },
+    { name: 'Agência Digital', email: 'admin@agenciadigital.io', document: '98.765.432/0001-10', documentType: 'CNPJ' as const, type: 'COMPANY' as const, phone: '(31) 2222-0003', status: 'SUSPENDED' as const },
+  ]
+
+  for (const client of sampleClients) {
+    await prisma.client.upsert({
+      where: { organizationId_email: { organizationId: devOrg.id, email: client.email } },
+      create: { ...client, organizationId: devOrg.id },
+      update: {},
+    })
+  }
+  console.log(`   ✅ ${sampleClients.length} clientes criados\n`)
+
+  // ─── Sample Categories & Products ─────────────────────────────────────────
+  console.log('📦 Criando categorias e produtos de exemplo...')
+
+  const categories = [
+    { name: 'Hospedagem', slug: 'hospedagem', icon: 'server', sortOrder: 1 },
+    { name: 'VPS & Cloud', slug: 'vps-cloud', icon: 'cpu', sortOrder: 2 },
+    { name: 'Domínios', slug: 'dominios', icon: 'globe', sortOrder: 3 },
+    { name: 'E-mail', slug: 'email', icon: 'mail', sortOrder: 4 },
+  ]
+
+  const createdCategories: Record<string, string> = {}
+  for (const cat of categories) {
+    const created = await prisma.productCategory.upsert({
+      where: { organizationId_slug: { organizationId: devOrg.id, slug: cat.slug } },
+      create: { ...cat, organizationId: devOrg.id },
+      update: {},
+    })
+    createdCategories[cat.slug] = created.id
+  }
+
+  const products = [
+    {
+      name: 'Hospedagem Compartilhada',
+      slug: 'hospedagem-compartilhada',
+      type: 'HOSTING' as const,
+      categoryId: createdCategories['hospedagem'],
+      description: 'Hospedagem cPanel com recursos ilimitados',
+      features: ['cPanel', 'SSL Grátis', 'WordPress 1-click', 'Backups diários'],
+      plans: [
+        {
+          name: 'Starter',
+          slug: 'hosting-starter',
+          features: ['10 GB SSD', '1 site', '10 contas de e-mail'],
+          limits: { storage: 10, sites: 1, emails: 10, bandwidth: 100 },
+          prices: [
+            { cycle: 'MONTHLY', amount: '19.90', isDefault: true },
+            { cycle: 'ANNUAL', amount: '179.90', setupFee: '0' },
+          ],
+        },
+        {
+          name: 'Business',
+          slug: 'hosting-business',
+          isPopular: true,
+          features: ['50 GB SSD', '5 sites', '50 contas de e-mail', 'Backups diários'],
+          limits: { storage: 50, sites: 5, emails: 50, bandwidth: 500 },
+          prices: [
+            { cycle: 'MONTHLY', amount: '39.90', isDefault: true },
+            { cycle: 'ANNUAL', amount: '359.90' },
+          ],
+        },
+        {
+          name: 'Pro',
+          slug: 'hosting-pro',
+          features: ['200 GB SSD', 'Sites ilimitados', 'E-mails ilimitados', 'CDN incluso'],
+          limits: { storage: 200, sites: -1, emails: -1, bandwidth: -1 },
+          prices: [
+            { cycle: 'MONTHLY', amount: '79.90', isDefault: true },
+            { cycle: 'ANNUAL', amount: '719.90' },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'VPS Linux',
+      slug: 'vps-linux',
+      type: 'VPS' as const,
+      categoryId: createdCategories['vps-cloud'],
+      description: 'Servidores VPS com KVM e SSD NVMe',
+      features: ['KVM', 'SSD NVMe', 'IPv4 dedicado', 'Painel de controle'],
+      plans: [
+        {
+          name: 'VPS-1',
+          slug: 'vps-1',
+          features: ['1 vCPU', '2 GB RAM', '40 GB SSD NVMe', '1 TB Transfer'],
+          limits: { vcpu: 1, ram: 2, storage: 40, transfer: 1024 },
+          prices: [
+            { cycle: 'MONTHLY', amount: '49.90', isDefault: true },
+            { cycle: 'ANNUAL', amount: '479.90' },
+          ],
+        },
+        {
+          name: 'VPS-2',
+          slug: 'vps-2',
+          isPopular: true,
+          features: ['2 vCPU', '4 GB RAM', '80 GB SSD NVMe', '2 TB Transfer'],
+          limits: { vcpu: 2, ram: 4, storage: 80, transfer: 2048 },
+          prices: [
+            { cycle: 'MONTHLY', amount: '89.90', isDefault: true },
+            { cycle: 'ANNUAL', amount: '859.90' },
+          ],
+        },
+      ],
+    },
+  ]
+
+  for (const prod of products) {
+    const { plans, ...productData } = prod
+
+    const product = await prisma.product.upsert({
+      where: { organizationId_slug: { organizationId: devOrg.id, slug: prod.slug } },
+      create: { ...productData, organizationId: devOrg.id },
+      update: {},
+    })
+
+    for (const planData of plans) {
+      const { prices, ...planInfo } = planData
+
+      const existingPlan = await prisma.plan.findUnique({
+        where: { organizationId_slug: { organizationId: devOrg.id, slug: planInfo.slug } },
+      })
+
+      const plan = existingPlan
+        ? await prisma.plan.update({ where: { id: existingPlan.id }, data: planInfo })
+        : await prisma.plan.create({ data: { ...planInfo, organizationId: devOrg.id, productId: product.id } })
+
+      for (const price of prices) {
+        await prisma.planPrice.upsert({
+          where: { planId_currency_cycle: { planId: plan.id, currency: 'BRL', cycle: price.cycle as any } },
+          create: { planId: plan.id, currency: 'BRL', ...price, cycle: price.cycle as any, amount: price.amount, setupFee: price.setupFee ?? '0' },
+          update: { amount: price.amount },
+        })
+      }
+    }
+
+    console.log(`   ✅ Produto "${prod.name}" com ${plans.length} planos`)
+  }
+
+  console.log('\n🎉 Seed concluído com sucesso!')
+  console.log('\n📌 Acesso:')
+  console.log('   E-mail:  admin@nexano.dev')
+  console.log('   Senha:   nexano@123')
+  console.log('   API:     http://localhost:3001/api/v1')
+  console.log('   Web:     http://localhost:3000')
 }
 
 main()
