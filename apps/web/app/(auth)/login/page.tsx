@@ -49,10 +49,11 @@ export default function LoginPage() {
       })
 
       const firstOrg = result.user.organizations[0]
-      if (firstOrg?.roleSlug === 'owner' || firstOrg?.roleSlug === 'admin') {
+      const clientRoles = ['client', 'customer']
+      if (firstOrg && !clientRoles.includes(firstOrg.roleSlug ?? '')) {
         router.push('/admin/dashboard')
       } else {
-        router.push('/portal')
+        router.push('/')
       }
     } catch (error) {
       const message = getErrorMessage(error)
