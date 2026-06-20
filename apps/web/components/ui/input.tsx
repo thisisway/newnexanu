@@ -5,11 +5,12 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
   label?: string
+  hint?: string
   error?: string | boolean
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, leftIcon, rightIcon, label, error, ...props }, ref) => {
+  ({ className, type, leftIcon, rightIcon, label, hint, error, ...props }, ref) => {
     const errorMessage = typeof error === 'string' ? error : undefined
     const hasError = !!error
 
@@ -52,7 +53,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         />
       )
 
-    if (label || errorMessage) {
+    if (label || errorMessage || hint) {
       return (
         <div className="flex flex-col gap-1.5">
           {label && (
@@ -63,6 +64,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
           {inputEl}
           {errorMessage && <p className="text-xs text-destructive">{errorMessage}</p>}
+          {!errorMessage && hint && <p className="text-xs text-muted-foreground">{hint}</p>}
         </div>
       )
     }
