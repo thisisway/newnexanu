@@ -131,6 +131,54 @@ export const paymentsApi = {
     api.post(`/admin/payments/${id}/confirm`).then((r) => r.data),
 }
 
+export interface Subscription {
+  id: string
+  organizationId: string
+  orderId: string
+  clientId: string
+  status: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'SUSPENDED' | 'CANCELLED' | 'EXPIRED'
+  currentPeriodStart: string
+  currentPeriodEnd: string
+  nextBillingDate: string
+  cancelAtPeriodEnd: boolean
+  cancelledAt?: string
+  trialEndsAt?: string
+  createdAt: string
+  client?: { id: string; name: string; email: string }
+  order?: {
+    id: string
+    billingCycle: BillingCycle
+    total: string
+    plan?: { id: string; name: string }
+  }
+}
+
+export const subscriptionsApi = {
+  list: (params?: { clientId?: string; status?: string; page?: number; limit?: number }) =>
+    api.get('/admin/subscriptions', { params }).then((r) => r.data),
+
+  get: (id: string) =>
+    api.get(`/admin/subscriptions/${id}`).then((r) => r.data),
+
+  cancel: (id: string, atPeriodEnd = false) =>
+    api.post(`/admin/subscriptions/${id}/cancel`, { atPeriodEnd }).then((r) => r.data),
+
+  suspend: (id: string) =>
+    api.post(`/admin/subscriptions/${id}/suspend`).then((r) => r.data),
+
+  reactivate: (id: string) =>
+    api.post(`/admin/subscriptions/${id}/reactivate`).then((r) => r.data),
+}
+
+export const SUBSCRIPTION_STATUS_LABELS: Record<Subscription['status'], string> = {
+  TRIAL: 'Trial',
+  ACTIVE: 'Ativa',
+  PAST_DUE: 'Vencida',
+  SUSPENDED: 'Suspensa',
+  CANCELLED: 'Cancelada',
+  EXPIRED: 'Expirada',
+}
+
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING: 'Pendente',
   ACTIVE: 'Ativo',

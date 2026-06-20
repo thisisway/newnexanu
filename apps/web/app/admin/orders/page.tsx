@@ -4,13 +4,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ShoppingCart, RefreshCw, Eye, CheckCircle, XCircle,
-  Clock, AlertTriangle, TrendingUp,
+  Clock, AlertTriangle, TrendingUp, Plus,
 } from 'lucide-react'
 import {
   ordersApi, Order, ORDER_STATUS_LABELS, CYCLE_LABELS, formatCurrency,
 } from '@/lib/api/orders'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { OrderFormDrawer } from './components/order-form-drawer'
 import { DataTable, Pagination, Column } from '@/components/ui/data-table'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Card, CardContent } from '@/components/ui/card'
@@ -37,6 +38,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
@@ -164,6 +166,13 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Drawer */}
+      <OrderFormDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSuccess={() => { setDrawerOpen(false); fetchOrders() }}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -172,6 +181,9 @@ export default function OrdersPage() {
             Acompanhe e gerencie os pedidos dos seus clientes.
           </p>
         </div>
+        <Button onClick={() => setDrawerOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Novo pedido
+        </Button>
       </div>
 
       {/* Summary cards */}
