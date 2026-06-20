@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditSeverity } from '@prisma/client'
 
@@ -28,9 +29,9 @@ export class AuditService {
         action: dto.action,
         entity: dto.entity,
         entityId: dto.entityId,
-        before: dto.before ?? undefined,
-        after: dto.after ?? undefined,
-        metadata: dto.metadata ?? undefined,
+        before: (dto.before ?? undefined) as Prisma.InputJsonValue | undefined,
+        after: (dto.after ?? undefined) as Prisma.InputJsonValue | undefined,
+        metadata: (dto.metadata ?? undefined) as Prisma.InputJsonValue | undefined,
         ip: dto.ip,
         userAgent: dto.userAgent,
         severity: dto.severity ?? 'INFO',
@@ -52,7 +53,7 @@ export class AuditService {
     const perPage = options.perPage ?? 50
     const skip = (page - 1) * perPage
 
-    const where: Record<string, unknown> = { organizationId }
+    const where: Prisma.AuditLogWhereInput = { organizationId }
     if (options.entity) where.entity = options.entity
     if (options.userId) where.userId = options.userId
     if (options.action) where.action = { contains: options.action }

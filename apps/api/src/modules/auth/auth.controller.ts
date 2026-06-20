@@ -1,5 +1,4 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req } from '@nestjs/common'
-import { Request } from 'express'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
 import { RegisterDto } from './dto/register.dto'
@@ -8,27 +7,32 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto'
 import { Public } from '../../common/decorators/permissions.decorator'
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator'
 
+interface NestRequest {
+  ip: string
+  headers: Record<string, string | string[] | undefined>
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('register')
-  register(@Body() dto: RegisterDto, @Req() req: Request) {
-    return this.authService.register(dto, req.ip, req.headers['user-agent'])
+  register(@Body() dto: RegisterDto, @Req() req: NestRequest) {
+    return this.authService.register(dto, req.ip, req.headers['user-agent'] as string | undefined)
   }
 
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() dto: LoginDto, @Req() req: Request) {
-    return this.authService.login(dto, req.ip, req.headers['user-agent'])
+  login(@Body() dto: LoginDto, @Req() req: NestRequest) {
+    return this.authService.login(dto, req.ip, req.headers['user-agent'] as string | undefined)
   }
 
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refresh(@Body() dto: RefreshTokenDto, @Req() req: Request) {
+  refresh(@Body() dto: RefreshTokenDto, @Req() req: NestRequest) {
     return this.authService.refreshTokens(dto.refreshToken, req.ip)
   }
 

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../audit/audit.service'
 import { CreateClientDto } from './dto/create-client.dto'
@@ -18,14 +19,14 @@ export class ClientsService {
     const { search, status, type, page = 1, limit = 20 } = query
     const skip = (page - 1) * limit
 
-    const where = {
+    const where: Prisma.ClientWhereInput = {
       organizationId,
       ...(status && { status }),
       ...(type && { type }),
       ...(search && {
         OR: [
-          { name: { contains: search, mode: 'insensitive' as const } },
-          { email: { contains: search, mode: 'insensitive' as const } },
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
           { document: { contains: search } },
           { phone: { contains: search } },
         ],
@@ -72,8 +73,13 @@ export class ClientsService {
     })
     if (exists) throw new ConflictException('Já existe um cliente com este e-mail')
 
+    const { address, ...rest } = dto
     const client = await this.prisma.client.create({
-      data: { ...dto, organizationId },
+      data: {
+        ...rest,
+        organizationId,
+        address: address as Prisma.InputJsonValue | undefined,
+      },
     })
 
     await this.audit.log({
@@ -82,7 +88,7 @@ export class ClientsService {
       action: 'client.created',
       entity: 'client',
       entityId: client.id,
-      after: client,
+      after: client as unknown as Record<string, unknown>,
     })
 
     return client
@@ -98,9 +104,13 @@ export class ClientsService {
       if (exists) throw new ConflictException('Já existe um cliente com este e-mail')
     }
 
+    const { address, ...rest } = dto
     const updated = await this.prisma.client.update({
       where: { id },
-      data: dto,
+      data: {
+        ...rest,
+        address: address as Prisma.InputJsonValue | undefined,
+      },
     })
 
     await this.audit.log({
@@ -109,8 +119,8 @@ export class ClientsService {
       action: 'client.updated',
       entity: 'client',
       entityId: id,
-      before: client,
-      after: updated,
+      before: client as unknown as Record<string, unknown>,
+      after: updated as unknown as Record<string, unknown>,
     })
 
     return updated
@@ -127,7 +137,7 @@ export class ClientsService {
       action: 'client.deleted',
       entity: 'client',
       entityId: id,
-      before: client,
+      before: client as unknown as Record<string, unknown>,
       severity: 'WARNING',
     })
   }

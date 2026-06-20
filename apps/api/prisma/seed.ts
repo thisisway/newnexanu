@@ -374,7 +374,15 @@ async function main() {
       for (const price of prices) {
         await prisma.planPrice.upsert({
           where: { planId_currency_cycle: { planId: plan.id, currency: 'BRL', cycle: price.cycle as any } },
-          create: { planId: plan.id, currency: 'BRL', ...price, cycle: price.cycle as any, amount: price.amount, setupFee: price.setupFee ?? '0' },
+          create: {
+            planId: plan.id,
+            currency: 'BRL',
+            cycle: price.cycle as any,
+            amount: price.amount,
+            setupFee: (price.setupFee ?? '0') as unknown as any,
+            isDefault: (price as any).isDefault ?? false,
+            trialDays: (price as any).trialDays ?? 0,
+          },
           update: { amount: price.amount },
         })
       }

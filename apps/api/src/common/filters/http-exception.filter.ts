@@ -6,7 +6,15 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common'
-import { Request, Response } from 'express'
+
+interface NestHttpRequest {
+  url: string
+}
+
+interface NestHttpResponse {
+  status(code: number): NestHttpResponse
+  json(body: unknown): void
+}
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -14,8 +22,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
-    const response = ctx.getResponse<Response>()
-    const request = ctx.getRequest<Request>()
+    const response = ctx.getResponse<NestHttpResponse>()
+    const request = ctx.getRequest<NestHttpRequest>()
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR
     let message = 'Ocorreu um erro inesperado. Tente novamente.'
