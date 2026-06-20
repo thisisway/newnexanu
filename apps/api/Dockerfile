@@ -20,16 +20,16 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install production deps standalone (without workspace)
+# Install production deps and Prisma CLI
 COPY apps/api/package.json ./package.json
-RUN npm install --omit=dev --ignore-scripts && npm install prisma
+RUN npm install --omit=dev && npm install prisma
 
-# Copy built artifacts
-COPY --from=builder /app/apps/api/dist ./dist
+# Copy schema then generate Prisma client for this platform
 COPY --from=builder /app/apps/api/prisma ./prisma
+RUN node_modules/.bin/prisma generate
 
-# Override with the compiled Prisma client from builder
-COPY --from=builder /app/apps/api/node_modules/.prisma ./node_modules/.prisma
+# Copy compiled dist
+COPY --from=builder /app/apps/api/dist ./dist
 
 EXPOSE 3001
 
