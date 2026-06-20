@@ -17,6 +17,9 @@ RUN cd apps/api && npx prisma generate && npx nest build
 # ── Stage 2: Production ───────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
 
+# OpenSSL 3 required by Prisma query engine on Alpine
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 ENV NODE_ENV=production
 
@@ -24,7 +27,7 @@ ENV NODE_ENV=production
 COPY apps/api/package.json ./package.json
 RUN npm install --omit=dev && npm install prisma
 
-# Copy schema then generate Prisma client for this platform
+# Copy schema then generate Prisma client for this platform (linux-musl-openssl-3.0.x)
 COPY --from=builder /app/apps/api/prisma ./prisma
 RUN node_modules/.bin/prisma generate
 
