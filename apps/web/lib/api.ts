@@ -1,10 +1,16 @@
 import axios, { type AxiosError, type AxiosInstance } from 'axios'
 import type { ApiError } from '@/types'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+// Browser calls /api/backend/* which Next.js rewrites to the internal API.
+// NEXT_PUBLIC_API_URL is only used server-side (next.config.mjs rewrites).
+const BASE_URL = typeof window !== 'undefined'
+  ? ''
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001')
+
+const API_PREFIX = typeof window !== 'undefined' ? '/api/backend' : '/api/v1'
 
 export const api: AxiosInstance = axios.create({
-  baseURL: `${BASE_URL}/api/v1`,
+  baseURL: `${BASE_URL}${API_PREFIX}`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -42,7 +48,7 @@ api.interceptors.response.use(
           return Promise.reject(error)
         }
 
-        const { data } = await axios.post(`${BASE_URL}/api/v1/auth/refresh`, { refreshToken })
+        const { data } = await axios.post('/api/backend/auth/refresh', { refreshToken })
         const newToken = data.data?.accessToken || data.accessToken
         const newRefreshToken = data.data?.refreshToken || data.refreshToken
 
