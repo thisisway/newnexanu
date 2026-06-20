@@ -17,6 +17,7 @@ import { PaymentsModule } from './modules/payments/payments.module'
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module'
 import { StatsModule } from './modules/stats/stats.module'
 import { PortalModule } from './modules/portal/portal.module'
+import { TicketsModule } from './modules/tickets/tickets.module'
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { PortalModule } from './modules/portal/portal.module'
     SubscriptionsModule,
     StatsModule,
     PortalModule,
+    TicketsModule,
   ],
 })
 export class AppModule implements NestModule {

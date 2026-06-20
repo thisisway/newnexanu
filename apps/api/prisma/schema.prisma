@@ -34,6 +34,7 @@ model Organization {
   subscriptions     Subscription[]
   invoices          Invoice[]
   payments          Payment[]
+  tickets           Ticket[]
 
   @@map("organizations")
 }
@@ -64,10 +65,12 @@ model User {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
-  organizations OrganizationUser[]
-  sessions      Session[]
-  auditLogs     AuditLog[]
-  clientNotes   ClientNote[]
+  organizations    OrganizationUser[]
+  sessions         Session[]
+  auditLogs        AuditLog[]
+  clientNotes      ClientNote[]
+  assignedTickets  Ticket[]
+  ticketMessages   TicketMessage[]
 
   @@map("users")
 }
@@ -230,6 +233,8 @@ model Client {
   subscriptions  Subscription[]
   invoices       Invoice[]
   payments       Payment[]
+  tickets        Ticket[]
+  ticketMessages TicketMessage[]
 
   @@unique([organizationId, email])
   @@index([organizationId])
@@ -690,4 +695,68 @@ enum PaymentStatus {
   CHARGEBACK
 
   @@map("payment_status")
+}
+
+// ─── Tickets / Support ────────────────────────────────────────────────────
+
+model Ticket {
+  id             String         @id @default(cuid())
+  organizationId String
+  clientId       String?
+  assignedToId   String?
+  number         Int
+  subject        String
+  status         TicketStatus   @default(OPEN)
+  priority       TicketPriority @default(MEDIUM)
+  category       String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  closedAt       DateTime?
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client?         @relation(fields: [clientId], references: [id])
+  assignedTo   User?           @relation(fields: [assignedToId], references: [id])
+  messages     TicketMessage[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([status])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  userId     String?
+  clientId   String?
+  body       String   @db.Text
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  ticket Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user   User?   @relation(fields: [userId], references: [id])
+  client Client? @relation(fields: [clientId], references: [id])
+
+  @@index([ticketId])
+  @@map("ticket_messages")
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_CLIENT
+  RESOLVED
+  CLOSED
+
+  @@map("ticket_status")
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
+  @@map("ticket_priority")
 }

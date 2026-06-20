@@ -1,11 +1,16 @@
-import { Controller, Get, Query } from '@nestjs/common'
+import { Controller, Get, Post, Patch, Param, Body, Query } from '@nestjs/common'
 import { PortalService } from './portal.service'
+import { TicketsService } from '../tickets/tickets.service'
+import { CreateTicketDto } from '../tickets/dto/create-ticket.dto'
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator'
 import { CurrentOrg } from '../../common/decorators/current-org.decorator'
 
 @Controller('portal')
 export class PortalController {
-  constructor(private readonly service: PortalService) {}
+  constructor(
+    private readonly service: PortalService,
+    private readonly ticketsService: TicketsService,
+  ) {}
 
   @Get('me')
   getProfile(@CurrentUser() user: JwtPayload, @CurrentOrg() orgId: string) {
@@ -35,5 +40,54 @@ export class PortalController {
   @Get('orders')
   getOrders(@CurrentUser() user: JwtPayload, @CurrentOrg() orgId: string) {
     return this.service.getOrders(user.sub, orgId)
+  }
+
+  // ── Tickets ──────────────────────────────────────────────────────────────
+
+  @Get('tickets')
+  async getTickets(@CurrentUser() user: JwtPayload, @CurrentOrg() orgId: string) {
+    const client = await this.service.getProfile(user.sub, orgId)
+    return this.ticketsService.findByClient(orgId, client.id)
+  }
+
+  @Post('tickets')
+  async createTicket(
+    @CurrentUser() user: JwtPayload,
+    @CurrentOrg() orgId: string,
+    @Body() dto: CreateTicketDto,
+  ) {
+    const client = await this.service.getProfile(user.sub, orgId)
+    return this.ticketsService.createByClient(orgId, client.id, dto)
+  }
+
+  @Get('tickets/:id')
+  async getTicket(
+    @CurrentUser() user: JwtPayload,
+    @CurrentOrg() orgId: string,
+    @Param('id') id: string,
+  ) {
+    const client = await this.service.getProfile(user.sub, orgId)
+    return this.ticketsService.findOneByClient(orgId, id, client.id)
+  }
+
+  @Post('tickets/:id/messages')
+  async addMessage(
+    @CurrentUser() user: JwtPayload,
+    @CurrentOrg() orgId: string,
+    @Param('id') id: string,
+    @Body('body') body: string,
+  ) {
+    const client = await this.service.getProfile(user.sub, orgId)
+    return this.ticketsService.addClientMessage(orgId, id, client.id, body)
+  }
+
+  @Patch('tickets/:id/close')
+  async closeTicket(
+    @CurrentUser() user: JwtPayload,
+    @CurrentOrg() orgId: string,
+    @Param('id') id: string,
+  ) {
+    const client = await this.service.getProfile(user.sub, orgId)
+    return this.ticketsService.closeByClient(orgId, id, client.id)
   }
 }
