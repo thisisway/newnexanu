@@ -27,6 +27,7 @@ import {
   Boxes,
   ShieldCheck,
   Code,
+  RefreshCcw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -36,6 +37,7 @@ const mainNav = [
   { label: 'Visão Geral', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Clientes', href: '/admin/clients', icon: Users },
   { label: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
+  { label: 'Assinaturas', href: '/admin/subscriptions', icon: RefreshCcw },
   { label: 'Serviços', href: '/admin/services', icon: Server },
   { label: 'Produtos', href: '/admin/products', icon: Package },
   { label: 'Faturas', href: '/admin/invoices', icon: FileText },

@@ -15,6 +15,7 @@ import { OrdersModule } from './modules/orders/orders.module'
 import { InvoicesModule } from './modules/invoices/invoices.module'
 import { PaymentsModule } from './modules/payments/payments.module'
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module'
+import { StatsModule } from './modules/stats/stats.module'
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
     InvoicesModule,
     PaymentsModule,
     SubscriptionsModule,
+    StatsModule,
   ],
 })
 export class AppModule implements NestModule {

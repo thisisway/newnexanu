@@ -3,17 +3,26 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Building2, User, Mail, Phone, FileText,
-  Plus, Trash2, MessageSquare, Lock, Users, Send,
-  Pencil,
+  ArrowLeft, Building2, User, FileText,
+  Plus, Trash2, Lock, Send,
+  Pencil, ShoppingCart, ExternalLink,
 } from 'lucide-react'
 import { clientsApi, Client, ClientNote } from '@/lib/api/clients'
+import { ordersApi, invoicesApi, Order, Invoice, ORDER_STATUS_LABELS, INVOICE_STATUS_LABELS, formatCurrency, CYCLE_LABELS } from '@/lib/api/orders'
 import { Button } from '@/components/ui/button'
 import { Badge, StatusBadge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ClientFormDrawer } from '../components/client-form-drawer'
+
+const ORDER_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+  PENDING: 'warning', ACTIVE: 'success', SUSPENDED: 'warning', CANCELLED: 'destructive', FRAUD: 'destructive',
+}
+
+const INVOICE_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+  DRAFT: 'outline', OPEN: 'warning', PAID: 'success', OVERDUE: 'destructive', CANCELLED: 'outline', REFUNDED: 'outline',
+}
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
@@ -40,6 +49,8 @@ export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [client, setClient] = useState<Client | null>(null)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
   const [noteContent, setNoteContent] = useState('')
   const [sendingNote, setSendingNote] = useState(false)
@@ -52,8 +63,14 @@ export default function ClientDetailPage() {
   async function load() {
     setLoading(true)
     try {
-      const data = await clientsApi.get(id)
-      setClient(data.data ?? data)
+      const [clientData, ordersData, invoicesData] = await Promise.all([
+        clientsApi.get(id),
+        ordersApi.list({ clientId: id, limit: 5 }),
+        invoicesApi.list({ clientId: id, limit: 5 }),
+      ])
+      setClient(clientData.data ?? clientData)
+      setOrders(ordersData.data ?? ordersData)
+      setInvoices(invoicesData.data ?? invoicesData)
     } finally {
       setLoading(false)
     }
@@ -258,10 +275,13 @@ export default function ClientDetailPage() {
             <p className="mb-4 text-sm font-semibold text-foreground">Resumo</p>
             <div className="flex flex-col gap-3">
               {[
-                { label: 'Serviços ativos', value: '—' },
-                { label: 'Faturas em aberto', value: '—' },
-                { label: 'Total pago', value: '—' },
-                { label: 'Tickets abertos', value: '—' },
+                { label: 'Pedidos', value: String(orders.length) },
+                { label: 'Faturas em aberto', value: String(invoices.filter((i) => i.status === 'OPEN').length) },
+                {
+                  label: 'Total pago',
+                  value: formatCurrency(invoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + Number(i.total), 0)),
+                },
+                { label: 'Assinaturas ativas', value: String(orders.filter((o) => o.subscription?.status === 'ACTIVE').length) },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{label}</span>
@@ -272,6 +292,96 @@ export default function ClientDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Orders */}
+      <Section
+        title={`Pedidos (${orders.length})`}
+        action={
+          <button
+            onClick={() => router.push(`/admin/orders?clientId=${id}`)}
+            className="text-xs text-primary hover:underline"
+          >
+            Ver todos
+          </button>
+        }
+      >
+        {orders.length === 0 ? (
+          <p className="py-2 text-center text-sm text-muted-foreground">Nenhum pedido.</p>
+        ) : (
+          <div className="divide-y">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="flex cursor-pointer items-center justify-between gap-4 py-3 -mx-1 px-1 rounded-lg transition-colors hover:bg-muted/20"
+                onClick={() => router.push(`/admin/orders/${order.id}`)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <ShoppingCart className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{order.plan?.name ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground">{CYCLE_LABELS[order.billingCycle]}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Badge variant={ORDER_STATUS_VARIANTS[order.status] ?? 'outline'} className="text-xs">
+                    {ORDER_STATUS_LABELS[order.status]}
+                  </Badge>
+                  <p className="text-sm font-medium">{formatCurrency(order.total)}</p>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Invoices */}
+      <Section
+        title={`Faturas recentes (${invoices.length})`}
+        action={
+          <button
+            onClick={() => router.push(`/admin/invoices?clientId=${id}`)}
+            className="text-xs text-primary hover:underline"
+          >
+            Ver todas
+          </button>
+        }
+      >
+        {invoices.length === 0 ? (
+          <p className="py-2 text-center text-sm text-muted-foreground">Nenhuma fatura.</p>
+        ) : (
+          <div className="divide-y">
+            {invoices.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex cursor-pointer items-center justify-between gap-4 py-3 -mx-1 px-1 rounded-lg transition-colors hover:bg-muted/20"
+                onClick={() => router.push(`/admin/invoices/${inv.id}`)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{inv.number}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Venc. {new Date(inv.dueDate).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Badge variant={INVOICE_STATUS_VARIANTS[inv.status] ?? 'outline'} className="text-xs">
+                    {INVOICE_STATUS_LABELS[inv.status]}
+                  </Badge>
+                  <p className="text-sm font-medium">{formatCurrency(inv.total)}</p>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
 
       <ClientFormDrawer
         open={editOpen}

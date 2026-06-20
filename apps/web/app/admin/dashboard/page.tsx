@@ -1,119 +1,85 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
-  Users,
-  FileText,
-  Server,
-  HeadphonesIcon,
-  TrendingUp,
-  AlertCircle,
+  Users, FileText, TrendingUp, AlertCircle,
+  ShoppingCart, RefreshCcw, Clock, CheckCircle,
 } from 'lucide-react'
+import { api } from '@/lib/api'
 import { MetricCard } from '@/components/ui/card'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { StatusBadge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { formatCurrency, ORDER_STATUS_LABELS } from '@/lib/api/orders'
 
-export const metadata = {
-  title: 'Dashboard',
+interface DashboardStats {
+  mrr: number
+  activeClients: number
+  openInvoices: number
+  overdueInvoices: number
+  pendingOrders: number
+  activeSubscriptions: number
+  recentOrders: Array<{
+    id: string
+    status: string
+    total: string
+    createdAt: string
+    client?: { id: string; name: string }
+    plan?: { name: string }
+  }>
 }
 
-const metrics = [
-  {
-    title: 'MRR',
-    value: 'R$ 18.240',
-    description: 'Receita mensal recorrente',
-    icon: <TrendingUp />,
-    trend: { value: 12.5, label: 'vs mês anterior' },
-  },
-  {
-    title: 'Clientes ativos',
-    value: '147',
-    description: 'Total de clientes pagantes',
-    icon: <Users />,
-    trend: { value: 4.2, label: 'vs mês anterior' },
-  },
-  {
-    title: 'Faturas em aberto',
-    value: '23',
-    description: 'Aguardando pagamento',
-    icon: <FileText />,
-    trend: { value: -2, label: 'vs semana passada' },
-  },
-  {
-    title: 'Serviços ativos',
-    value: '312',
-    description: 'Em produção agora',
-    icon: <Server />,
-    trend: { value: 8.1, label: 'vs mês anterior' },
-  },
-]
-
-const attentionItems = [
-  {
-    count: 3,
-    label: 'VPS travadas no provisionamento',
-    action: 'Ver jobs',
-    href: '/admin/jobs',
-    severity: 'error',
-  },
-  {
-    count: 12,
-    label: 'Faturas vencidas há mais de 5 dias',
-    action: 'Enviar cobrança',
-    href: '/admin/invoices?status=overdue',
-    severity: 'warning',
-  },
-  {
-    count: 2,
-    label: 'Tickets críticos sem resposta',
-    action: 'Atender agora',
-    href: '/admin/support?priority=critical',
-    severity: 'error',
-  },
-  {
-    count: 4,
-    label: 'Domínios vencem em 7 dias',
-    action: 'Renovar',
-    href: '/admin/domains?expiring=7',
-    severity: 'warning',
-  },
-]
-
-const recentActivity = [
-  {
-    id: '1',
-    type: 'client',
-    title: 'Novo cliente',
-    description: 'Wesley Santos acabou de criar uma conta',
-    time: '2 minutos atrás',
-    status: 'active',
-  },
-  {
-    id: '2',
-    type: 'payment',
-    title: 'Pagamento recebido',
-    description: 'R$ 299,00 — Plano VPS Pro — Maria Lima',
-    time: '15 minutos atrás',
-    status: 'paid',
-  },
-  {
-    id: '3',
-    type: 'service',
-    title: 'Serviço provisionado',
-    description: 'VPS-001 criada com sucesso para Carlos Souza',
-    time: '32 minutos atrás',
-    status: 'active',
-  },
-  {
-    id: '4',
-    type: 'ticket',
-    title: 'Ticket aberto',
-    description: '#0041 — Problema com SSL — Ana Paula',
-    time: '1 hora atrás',
-    status: 'open',
-  },
-]
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+  PENDING: 'warning',
+  ACTIVE: 'success',
+  SUSPENDED: 'warning',
+  CANCELLED: 'destructive',
+  FRAUD: 'destructive',
+}
 
 export default function DashboardPage() {
+  const router = useRouter()
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.get('/admin/stats/dashboard')
+      .then((r) => setStats(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const metrics = stats
+    ? [
+        {
+          title: 'MRR',
+          value: formatCurrency(stats.mrr),
+          description: 'Receita mensal recorrente',
+          icon: <TrendingUp />,
+        },
+        {
+          title: 'Clientes ativos',
+          value: String(stats.activeClients),
+          description: 'Total de clientes pagantes',
+          icon: <Users />,
+        },
+        {
+          title: 'Faturas em aberto',
+          value: String(stats.openInvoices),
+          description: 'Aguardando pagamento',
+          icon: <FileText />,
+        },
+        {
+          title: 'Assinaturas ativas',
+          value: String(stats.activeSubscriptions),
+          description: 'Planos recorrentes ativos',
+          icon: <RefreshCcw />,
+        },
+      ]
+    : []
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       {/* Header */}
@@ -126,9 +92,13 @@ export default function DashboardPage() {
 
       {/* Metrics */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((metric) => (
-          <MetricCard key={metric.title} {...metric} />
-        ))}
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-28 w-full rounded-xl" />
+            ))
+          : metrics.map((metric) => (
+              <MetricCard key={metric.title} {...metric} />
+            ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -141,80 +111,105 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3">
-            {attentionItems.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3"
-              >
-                <div className="flex items-start gap-2.5">
-                  <span
-                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
-                      item.severity === 'error'
-                        ? 'bg-danger/10 text-danger'
-                        : 'bg-warning/10 text-warning'
-                    }`}
-                  >
-                    {item.count}
-                  </span>
-                  <p className="text-xs text-muted-foreground">{item.label}</p>
-                </div>
-                <a
-                  href={item.href}
-                  className="shrink-0 text-[11px] font-medium text-primary hover:underline"
-                >
-                  {item.action}
-                </a>
-              </div>
-            ))}
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-14 w-full rounded-lg" />
+              ))
+            ) : (
+              <>
+                {(stats?.pendingOrders ?? 0) > 0 && (
+                  <AttentionItem
+                    count={stats!.pendingOrders}
+                    label="Pedidos aguardando ativação"
+                    action="Ver pedidos"
+                    href="/admin/orders?status=PENDING"
+                    severity="warning"
+                  />
+                )}
+                {(stats?.overdueInvoices ?? 0) > 0 && (
+                  <AttentionItem
+                    count={stats!.overdueInvoices}
+                    label="Faturas vencidas sem pagamento"
+                    action="Ver faturas"
+                    href="/admin/invoices?status=OVERDUE"
+                    severity="error"
+                  />
+                )}
+                {(stats?.openInvoices ?? 0) > 0 && (
+                  <AttentionItem
+                    count={stats!.openInvoices}
+                    label="Faturas aguardando pagamento"
+                    action="Ver faturas"
+                    href="/admin/invoices?status=OPEN"
+                    severity="warning"
+                  />
+                )}
+                {stats && stats.pendingOrders === 0 && stats.overdueInvoices === 0 && stats.openInvoices === 0 && (
+                  <div className="flex flex-col items-center gap-2 py-4 text-center">
+                    <CheckCircle className="h-8 w-8 text-success" />
+                    <p className="text-sm text-muted-foreground">Tudo em dia!</p>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
+        {/* Recent Orders */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Atividade recente</CardTitle>
-              <a href="/admin/audit" className="text-xs text-muted-foreground hover:text-primary">
-                Ver tudo
-              </a>
+              <CardTitle>Pedidos recentes</CardTitle>
+              <button
+                onClick={() => router.push('/admin/orders')}
+                className="text-xs text-muted-foreground hover:text-primary"
+              >
+                Ver todos
+              </button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-0">
-              {recentActivity.map((item, index) => (
-                <div
-                  key={item.id}
-                  className={`flex items-start gap-4 py-3 ${
-                    index < recentActivity.length - 1
-                      ? 'border-b border-border'
-                      : ''
-                  }`}
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                    {item.type === 'client' && <Users className="h-4 w-4 text-muted-foreground" />}
-                    {item.type === 'payment' && (
-                      <FileText className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    {item.type === 'service' && (
-                      <Server className="h-4 w-4 text-muted-foreground" />
-                    )}
-                    {item.type === 'ticket' && (
-                      <HeadphonesIcon className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium">{item.title}</p>
-                      <StatusBadge status={item.status} />
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : !stats?.recentOrders.length ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <ShoppingCart className="h-8 w-8 text-muted-foreground/40" />
+                <p className="text-sm text-muted-foreground">Nenhum pedido ainda.</p>
+              </div>
+            ) : (
+              <div className="divide-y">
+                {stats.recentOrders.map((order, i) => (
+                  <div
+                    key={order.id}
+                    onClick={() => router.push(`/admin/orders/${order.id}`)}
+                    className="flex cursor-pointer items-center justify-between gap-4 py-3 transition-colors hover:bg-muted/20 -mx-1 px-1 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{order.client?.name ?? '—'}</p>
+                        <p className="text-xs text-muted-foreground truncate">{order.plan?.name ?? '—'}</p>
+                      </div>
                     </div>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {item.description}
-                    </p>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <Badge variant={STATUS_VARIANTS[order.status] ?? 'outline'} className="text-xs">
+                        {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] ?? order.status}
+                      </Badge>
+                      <p className="text-sm font-medium w-24 text-right">{formatCurrency(order.total)}</p>
+                      <p className="text-xs text-muted-foreground w-20 text-right">
+                        {new Date(order.createdAt).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
                   </div>
-                  <p className="shrink-0 text-[11px] text-muted-foreground">{item.time}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -224,14 +219,55 @@ export default function DashboardPage() {
         <CardContent className="py-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground">Ações rápidas:</span>
-            <Button variant="outline" size="sm">Novo cliente</Button>
-            <Button variant="outline" size="sm">Criar fatura</Button>
-            <Button variant="outline" size="sm">Novo serviço</Button>
-            <Button variant="outline" size="sm">Responder tickets</Button>
-            <Button variant="outline" size="sm">Ver relatórios</Button>
+            <Button variant="outline" size="sm" onClick={() => router.push('/admin/clients')}>
+              Novo cliente
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => router.push('/admin/orders')}>
+              Novo pedido
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => router.push('/admin/invoices')}>
+              Ver faturas
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => router.push('/admin/subscriptions')}>
+              Assinaturas
+            </Button>
           </div>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function AttentionItem({
+  count, label, action, href, severity,
+}: {
+  count: number
+  label: string
+  action: string
+  href: string
+  severity: 'error' | 'warning'
+}) {
+  const router = useRouter()
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-lg border border-border bg-muted/30 p-3">
+      <div className="flex items-start gap-2.5">
+        <span
+          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+            severity === 'error'
+              ? 'bg-destructive/10 text-destructive'
+              : 'bg-warning/10 text-warning'
+          }`}
+        >
+          {count}
+        </span>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+      <button
+        onClick={() => router.push(href)}
+        className="shrink-0 text-[11px] font-medium text-primary hover:underline"
+      >
+        {action}
+      </button>
     </div>
   )
 }
