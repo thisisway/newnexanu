@@ -379,7 +379,7 @@ async function main() {
             currency: 'BRL',
             cycle: price.cycle as any,
             amount: price.amount,
-            setupFee: (price.setupFee ?? '0') as unknown as any,
+            setupFee: ((price as any).setupFee ?? '0') as unknown as any,
             isDefault: (price as any).isDefault ?? false,
             trialDays: (price as any).trialDays ?? 0,
           },
