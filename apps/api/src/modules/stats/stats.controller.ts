@@ -10,4 +10,9 @@ export class StatsController {
   getDashboard(@CurrentOrg() orgId: string) {
     return this.service.getDashboard(orgId)
   }
+
+  @Get('reports')
+  getReports(@CurrentOrg() orgId: string) {
+    return this.service.getReports(orgId)
+  }
 }

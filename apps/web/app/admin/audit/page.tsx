@@ -66,10 +66,20 @@ export default function AuditPage() {
     setLoading(true)
     try {
       const res = await api.get('/admin/audit-logs', {
-        params: { page, limit: 20, search: search || undefined },
+        params: {
+          page,
+          perPage: 20,
+          ...(search ? { action: search } : {}),
+        },
       })
-      setLogs(res.data.data ?? res.data)
-      if (res.data.total !== undefined) setMeta(res.data)
+      setLogs(res.data.data ?? [])
+      const m = res.data.meta ?? {}
+      setMeta({
+        total: m.total ?? 0,
+        page: m.page ?? 1,
+        limit: m.perPage ?? 20,
+        totalPages: m.totalPages ?? 1,
+      })
     } finally {
       setLoading(false)
     }

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -17,8 +18,14 @@ import {
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
+import { api } from '@/lib/api'
 
-const clientNav = [
+interface BadgeCounts {
+  openInvoices: number
+  openTickets: number
+}
+
+const baseNav = [
   { label: 'Início', href: '/portal', icon: Home, exact: true },
   { label: 'Meus Serviços', href: '/portal/services', icon: Server },
   { label: 'Sites', href: '/portal/sites', icon: Monitor },
@@ -26,18 +33,8 @@ const clientNav = [
   { label: 'Cloud Apps', href: '/portal/apps', icon: Cloud },
   { label: 'Domínios', href: '/portal/domains', icon: Globe },
   { label: 'E-mail', href: '/portal/email', icon: Mail },
-  {
-    label: 'Faturas',
-    href: '/portal/invoices',
-    icon: FileText,
-    badge: { label: '2', variant: 'warning' as const },
-  },
-  {
-    label: 'Suporte',
-    href: '/portal/support',
-    icon: HeadphonesIcon,
-    badge: { label: '1', variant: 'danger' as const },
-  },
+  { label: 'Faturas', href: '/portal/invoices', icon: FileText, badgeKey: 'openInvoices' as const },
+  { label: 'Suporte', href: '/portal/support', icon: HeadphonesIcon, badgeKey: 'openTickets' as const },
   { label: 'Loja', href: '/portal/store', icon: Store },
   { label: 'Configurações', href: '/portal/settings', icon: Settings },
 ]
@@ -48,6 +45,16 @@ interface ClientSidebarProps {
 
 export function ClientSidebar({ collapsed = false }: ClientSidebarProps) {
   const pathname = usePathname()
+  const [counts, setCounts] = useState<BadgeCounts>({ openInvoices: 0, openTickets: 0 })
+
+  useEffect(() => {
+    api.get('/portal/dashboard').then((r) => {
+      setCounts({
+        openInvoices: r.data?.openInvoices ?? 0,
+        openTickets: r.data?.openTickets ?? 0,
+      })
+    }).catch(() => {})
+  }, [])
 
   const isActive = (href: string, exact = false) => {
     if (exact) return pathname === href
@@ -62,11 +69,12 @@ export function ClientSidebar({ collapsed = false }: ClientSidebarProps) {
       href: string
       icon: React.ComponentType<{ className?: string }>
       exact?: boolean
-      badge?: { label: string; variant: 'warning' | 'danger' }
+      badgeKey?: keyof BadgeCounts
     }
   }) => {
     const active = isActive(item.href, item.exact)
     const Icon = item.icon
+    const count = item.badgeKey ? counts[item.badgeKey] : 0
 
     const content = (
       <Link
@@ -88,9 +96,12 @@ export function ClientSidebar({ collapsed = false }: ClientSidebarProps) {
         {!collapsed && (
           <>
             <span className="flex-1 truncate">{item.label}</span>
-            {item.badge && (
-              <Badge variant={item.badge.variant} className="h-5 min-w-5 justify-center text-[10px]">
-                {item.badge.label}
+            {count > 0 && (
+              <Badge
+                variant={item.badgeKey === 'openInvoices' ? 'warning' : 'destructive'}
+                className="h-5 min-w-5 justify-center text-[10px]"
+              >
+                {count}
               </Badge>
             )}
           </>
@@ -104,10 +115,8 @@ export function ClientSidebar({ collapsed = false }: ClientSidebarProps) {
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent side="right" className="ml-1">
             {item.label}
-            {item.badge && (
-              <span className="ml-1 rounded bg-warning/20 px-1 text-warning">
-                {item.badge.label}
-              </span>
+            {count > 0 && (
+              <span className="ml-1 rounded bg-warning/20 px-1 text-warning">{count}</span>
             )}
           </TooltipContent>
         </Tooltip>
@@ -148,7 +157,7 @@ export function ClientSidebar({ collapsed = false }: ClientSidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2">
         <div className="space-y-0.5">
-          {clientNav.map((item) => (
+          {baseNav.map((item) => (
             <NavItem key={item.href} item={item} />
           ))}
         </div>

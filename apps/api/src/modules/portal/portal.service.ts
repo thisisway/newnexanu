@@ -26,12 +26,15 @@ export class PortalService {
   async getDashboard(userId: string, orgId: string) {
     const client = await this.findClientByUser(userId, orgId)
 
-    const [openInvoices, activeOrders, recentInvoices] = await Promise.all([
+    const [openInvoices, activeOrders, openTickets, recentInvoices] = await Promise.all([
       this.prisma.invoice.count({
         where: { organizationId: orgId, clientId: client.id, status: 'OPEN' },
       }),
       this.prisma.order.count({
         where: { organizationId: orgId, clientId: client.id, status: 'ACTIVE' },
+      }),
+      this.prisma.ticket.count({
+        where: { organizationId: orgId, clientId: client.id, status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_CLIENT'] } },
       }),
       this.prisma.invoice.findMany({
         where: { organizationId: orgId, clientId: client.id },
@@ -41,7 +44,7 @@ export class PortalService {
       }),
     ])
 
-    return { client, openInvoices, activeOrders, recentInvoices }
+    return { client, openInvoices, activeOrders, openTickets, recentInvoices }
   }
 
   async getInvoices(userId: string, orgId: string, params: { status?: string; page?: number; limit?: number }) {
