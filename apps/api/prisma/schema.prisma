@@ -22,14 +22,18 @@ model Organization {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  users            OrganizationUser[]
-  roles            Role[]
-  auditLogs        AuditLog[]
-  clients          Client[]
+  users             OrganizationUser[]
+  roles             Role[]
+  auditLogs         AuditLog[]
+  clients           Client[]
   productCategories ProductCategory[]
-  products         Product[]
-  plans            Plan[]
-  addons           Addon[]
+  products          Product[]
+  plans             Plan[]
+  addons            Addon[]
+  orders            Order[]
+  subscriptions     Subscription[]
+  invoices          Invoice[]
+  payments          Payment[]
 
   @@map("organizations")
 }
@@ -219,9 +223,13 @@ model Client {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  contacts     ClientContact[]
-  clientNotes  ClientNote[]
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contacts       ClientContact[]
+  clientNotes    ClientNote[]
+  orders         Order[]
+  subscriptions  Subscription[]
+  invoices       Invoice[]
+  payments       Payment[]
 
   @@unique([organizationId, email])
   @@index([organizationId])
@@ -377,6 +385,7 @@ model Plan {
   product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   prices       PlanPrice[]
   addons       Addon[]
+  orders       Order[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -404,7 +413,8 @@ model PlanPrice {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  plan   Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  orders Order[]
 
   @@unique([planId, currency, cycle])
   @@index([planId])
@@ -440,6 +450,7 @@ model Addon {
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   plan         Plan?        @relation(fields: [planId], references: [id])
+  orderAddons  OrderAddon[]
 
   @@index([organizationId])
   @@index([planId])
@@ -458,4 +469,225 @@ enum AddonStatus {
   INACTIVE
 
   @@map("addon_status")
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────
+
+model Order {
+  id             String      @id @default(cuid())
+  organizationId String
+  clientId       String
+  planId         String
+  planPriceId    String
+  status         OrderStatus @default(PENDING)
+  billingCycle   BillingCycle
+  quantity       Int         @default(1)
+  unitPrice      Decimal     @db.Decimal(10, 2)
+  setupFee       Decimal     @default(0) @db.Decimal(10, 2)
+  discount       Decimal     @default(0) @db.Decimal(10, 2)
+  total          Decimal     @db.Decimal(10, 2)
+  notes          String?
+  metadata       Json        @default("{}")
+  activatedAt    DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client       @relation(fields: [clientId], references: [id])
+  plan         Plan         @relation(fields: [planId], references: [id])
+  planPrice    PlanPrice    @relation(fields: [planPriceId], references: [id])
+  subscription Subscription?
+  invoices     Invoice[]
+  orderAddons  OrderAddon[]
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderAddon {
+  id       String  @id @default(cuid())
+  orderId  String
+  addonId  String
+  quantity Int     @default(1)
+  price    Decimal @db.Decimal(10, 2)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  addon Addon @relation(fields: [addonId], references: [id])
+
+  @@index([orderId])
+  @@map("order_addons")
+}
+
+enum OrderStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  FRAUD
+
+  @@map("order_status")
+}
+
+// ─── Subscriptions ────────────────────────────────────────────────────────
+
+model Subscription {
+  id               String             @id @default(cuid())
+  organizationId   String
+  orderId          String             @unique
+  clientId         String
+  status           SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  nextBillingDate    DateTime
+  cancelAtPeriodEnd  Boolean          @default(false)
+  cancelledAt        DateTime?
+  trialEndsAt        DateTime?
+  metadata           Json             @default("{}")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id])
+  client       Client       @relation(fields: [clientId], references: [id])
+  invoices     Invoice[]
+
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([status])
+  @@index([nextBillingDate])
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+
+  @@map("subscription_status")
+}
+
+// ─── Invoices ─────────────────────────────────────────────────────────────
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  clientId       String
+  orderId        String?
+  subscriptionId String?
+  number         String
+  status         InvoiceStatus @default(DRAFT)
+  currency       String        @default("BRL")
+  subtotal       Decimal       @db.Decimal(10, 2)
+  discount       Decimal       @default(0) @db.Decimal(10, 2)
+  tax            Decimal       @default(0) @db.Decimal(10, 2)
+  total          Decimal       @db.Decimal(10, 2)
+  dueDate        DateTime
+  paidAt         DateTime?
+  notes          String?
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client        @relation(fields: [clientId], references: [id])
+  order        Order?        @relation(fields: [orderId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  items        InvoiceItem[]
+  payments     Payment[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId])
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  discount    Decimal @default(0) @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+
+  @@map("invoice_status")
+}
+
+// ─── Payments ─────────────────────────────────────────────────────────────
+
+model Payment {
+  id             String        @id @default(cuid())
+  organizationId String
+  invoiceId      String
+  clientId       String
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  amount         Decimal       @db.Decimal(10, 2)
+  currency       String        @default("BRL")
+  gatewayId      String?
+  gatewayData    Json?
+  pixCode        String?
+  pixExpiry      DateTime?
+  boletoCode     String?
+  boletoUrl      String?
+  boletoExpiry   DateTime?
+  paidAt         DateTime?
+  failedAt       DateTime?
+  failReason     String?
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoice      Invoice      @relation(fields: [invoiceId], references: [id])
+  client       Client       @relation(fields: [clientId], references: [id])
+
+  @@index([organizationId])
+  @@index([invoiceId])
+  @@index([status])
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  PIX
+  CREDIT_CARD
+  BOLETO
+  BANK_TRANSFER
+  BALANCE
+
+  @@map("payment_method")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+  CHARGEBACK
+
+  @@map("payment_status")
 }
