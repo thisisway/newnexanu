@@ -54,6 +54,15 @@ export interface PlanPrice {
   isDefault: boolean
 }
 
+export type PlanPriceInput = Pick<PlanPrice, 'cycle' | 'amount'> & {
+  setupFee?: string
+  isDefault?: boolean
+}
+
+export type PlanInput = Omit<Partial<Plan>, 'prices'> & {
+  prices?: PlanPriceInput[]
+}
+
 export interface Addon {
   id: string
   organizationId: string
@@ -104,10 +113,10 @@ export const productsApi = {
   getPlan: (id: string) =>
     api.get(`/admin/plans/${id}`).then((r) => r.data),
 
-  createPlan: (data: Partial<Plan>) =>
+  createPlan: (data: PlanInput) =>
     api.post('/admin/plans', data).then((r) => r.data),
 
-  updatePlan: (id: string, data: Partial<Plan>) =>
+  updatePlan: (id: string, data: PlanInput) =>
     api.patch(`/admin/plans/${id}`, data).then((r) => r.data),
 
   deletePlan: (id: string) =>
