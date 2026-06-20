@@ -10,9 +10,9 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/api/package.json ./apps/api/
 RUN pnpm install --frozen-lockfile
 
-# Copy source and build
+# Copy source and build main app + seed
 COPY apps/api ./apps/api
-RUN cd apps/api && npx prisma generate && npx nest build
+RUN cd apps/api && npx prisma generate && npx nest build && npx tsc -p tsconfig.seed.json
 
 # ── Stage 2: Production ───────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
@@ -31,8 +31,9 @@ RUN npm install --omit=dev && npm install prisma
 COPY --from=builder /app/apps/api/prisma ./prisma
 RUN node_modules/.bin/prisma generate
 
-# Copy compiled dist
+# Copy compiled app + seed
 COPY --from=builder /app/apps/api/dist ./dist
+COPY --from=builder /app/apps/api/dist-seed/prisma/seed.js ./dist/prisma/seed.js
 
 EXPOSE 3001
 
