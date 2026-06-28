@@ -230,6 +230,52 @@ export class AuthService {
     })
   }
 
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+    })
+    // Always return the same message to prevent user enumeration
+    if (!user) return
+
+    const token = await this.jwtService.signAsync(
+      { sub: user.id, type: 'password_reset', email: user.email },
+      {
+        secret: this.config.get<string>('jwt.secret'),
+        expiresIn: '1h',
+      },
+    )
+
+    // In production this would be sent via email; log for development
+    const resetUrl = `${this.config.get('frontendUrl') ?? 'http://localhost:3000'}/reset-password?token=${token}`
+    console.log(`[Password Reset] ${user.email} → ${resetUrl}`)
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    let payload: { sub: string; type: string }
+    try {
+      payload = this.jwtService.verify(token, {
+        secret: this.config.get<string>('jwt.secret'),
+      })
+    } catch {
+      throw new BadRequestException('Token de redefinição inválido ou expirado.')
+    }
+
+    if (payload.type !== 'password_reset') {
+      throw new BadRequestException('Token inválido.')
+    }
+
+    const rounds = this.config.get<number>('bcrypt.rounds') ?? 12
+    const passwordHash = await bcrypt.hash(newPassword, rounds)
+
+    await this.prisma.user.update({
+      where: { id: payload.sub },
+      data: { passwordHash },
+    })
+
+    // Invalidate all sessions so the user must log in with the new password
+    await this.prisma.session.deleteMany({ where: { userId: payload.sub } })
+  }
+
   async getProfile(userId: string) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },

@@ -50,10 +50,11 @@ export default function LoginPage() {
 
       const firstOrg = result.user.organizations[0]
       const clientRoles = ['client', 'customer']
+      const redirectParam = new URLSearchParams(window.location.search).get('redirect')
       if (firstOrg && !clientRoles.includes(firstOrg.roleSlug ?? '')) {
-        router.push('/admin/dashboard')
+        router.push(redirectParam ?? '/admin/dashboard')
       } else {
-        router.push('/')
+        router.push(redirectParam ?? '/portal')
       }
     } catch (error) {
       const message = getErrorMessage(error)
