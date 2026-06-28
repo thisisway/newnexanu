@@ -13,9 +13,9 @@ export function middleware(request: NextRequest) {
   const isAdmin = ADMIN_ROUTES.some((route) => pathname.startsWith(route))
   const isPortal = PORTAL_ROUTES.some((route) => pathname.startsWith(route))
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages (root handles role-based routing)
   if (isPublic && token) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   // Protect admin and portal routes

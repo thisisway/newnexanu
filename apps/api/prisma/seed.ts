@@ -164,6 +164,12 @@ const SYSTEM_ROLES = [
       'reports:read',
     ],
   },
+  {
+    name: 'Cliente',
+    slug: 'client',
+    description: 'Acesso ao portal do cliente (área restrita)',
+    permissions: [],
+  },
 ]
 
 async function main() {
@@ -185,11 +191,19 @@ async function main() {
   for (const roleData of SYSTEM_ROLES) {
     const { permissions, ...roleInfo } = roleData
 
-    const role = await prisma.role.upsert({
-      where: { organizationId_slug: { organizationId: '', slug: roleInfo.slug } },
-      create: { ...roleInfo, isSystem: true, organizationId: null },
-      update: { name: roleInfo.name, description: roleInfo.description },
+    // findFirst + conditional update/create ensures idempotency with nullable organizationId
+    const existing = await prisma.role.findFirst({
+      where: { slug: roleInfo.slug, isSystem: true, organizationId: null },
     })
+
+    const role = existing
+      ? await prisma.role.update({
+          where: { id: existing.id },
+          data: { name: roleInfo.name, description: roleInfo.description },
+        })
+      : await prisma.role.create({
+          data: { ...roleInfo, isSystem: true, organizationId: null },
+        })
 
     await prisma.rolePermission.deleteMany({ where: { roleId: role.id } })
 
@@ -255,6 +269,43 @@ async function main() {
     })
   }
   console.log(`   ✅ ${sampleClients.length} clientes criados\n`)
+
+  // ─── Client Portal User Accounts ──────────────────────────────────────────
+  console.log('🌐 Criando usuários do portal do cliente...')
+  const clientRole = await prisma.role.findFirst({ where: { slug: 'client', isSystem: true } })
+
+  const portalUsers = [
+    { name: 'João Silva', email: 'joao@empresa.com.br', password: 'Cliente@123' },
+    { name: 'Maria Souza', email: 'maria@hotmail.com', password: 'Cliente@123' },
+  ]
+
+  for (const pu of portalUsers) {
+    const portalUser = await prisma.user.upsert({
+      where: { email: pu.email },
+      create: {
+        email: pu.email,
+        name: pu.name,
+        passwordHash: await bcrypt.hash(pu.password, 12),
+        emailVerifiedAt: new Date(),
+        status: 'ACTIVE',
+      },
+      update: {},
+    })
+
+    await prisma.organizationUser.upsert({
+      where: { organizationId_userId: { organizationId: devOrg.id, userId: portalUser.id } },
+      create: {
+        organizationId: devOrg.id,
+        userId: portalUser.id,
+        roleId: clientRole?.id,
+        status: 'ACTIVE',
+      },
+      update: {},
+    })
+
+    console.log(`   ✅ ${pu.email} (senha: ${pu.password})`)
+  }
+  console.log()
 
   // ─── Sample Categories & Products ─────────────────────────────────────────
   console.log('📦 Criando categorias e produtos de exemplo...')
@@ -392,10 +443,16 @@ async function main() {
   }
 
   console.log('\n🎉 Seed concluído com sucesso!')
-  console.log('\n📌 Acesso:')
+  console.log('\n📌 Admin:')
   console.log('   E-mail:  admin@nexano.dev')
   console.log('   Senha:   nexano@123')
-  console.log('   API:     http://localhost:3001/api/v1')
+  console.log('\n📌 Portal do Cliente:')
+  console.log('   E-mail:  joao@empresa.com.br')
+  console.log('   Senha:   Cliente@123')
+  console.log('   ---')
+  console.log('   E-mail:  maria@hotmail.com')
+  console.log('   Senha:   Cliente@123')
+  console.log('\n   API:     http://localhost:3001/api/v1')
   console.log('   Web:     http://localhost:3000')
 }
 
