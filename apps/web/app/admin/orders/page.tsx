@@ -23,12 +23,12 @@ import {
 } from '@/components/ui/select'
 import { MoreHorizontal } from 'lucide-react'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   PENDING: 'warning',
   ACTIVE: 'success',
   SUSPENDED: 'warning',
-  CANCELLED: 'destructive',
-  FRAUD: 'destructive',
+  CANCELLED: 'danger',
+  FRAUD: 'danger',
 }
 
 export default function OrdersPage() {

@@ -3,7 +3,17 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
-import { Order, CYCLE_LABELS, formatCurrency } from '@/lib/api/orders'
+import { CYCLE_LABELS, formatCurrency } from '@/lib/api/orders'
+
+interface PortalOrder {
+  id: string
+  status: string
+  billingCycle: string
+  total: string
+  plan?: { id: string; name: string }
+  subscription?: { id: string; status: string; nextBillingDate?: string; currentPeriodEnd?: string }
+  _count?: { invoices: number }
+}
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -11,8 +21,8 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Server, FileText, CalendarClock } from 'lucide-react'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  ACTIVE: 'success', PENDING: 'warning', SUSPENDED: 'destructive', CANCELLED: 'outline', FRAUD: 'destructive',
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
+  ACTIVE: 'success', PENDING: 'warning', SUSPENDED: 'danger', CANCELLED: 'outline', FRAUD: 'danger',
 }
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Ativo', PENDING: 'Pendente', SUSPENDED: 'Suspenso', CANCELLED: 'Cancelado', FRAUD: 'Fraude',
@@ -20,7 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function PortalServicesPage() {
   const router = useRouter()
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<PortalOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
 
@@ -82,7 +92,7 @@ export default function PortalServicesPage() {
                 <div className="flex-1">
                   <p className="font-semibold text-foreground">{order.plan?.name ?? 'Serviço'}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {order.billingCycle ? CYCLE_LABELS[order.billingCycle] : ''}
+                    {order.billingCycle ? (CYCLE_LABELS as Record<string, string>)[order.billingCycle] : ''}
                   </p>
                 </div>
 

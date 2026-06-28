@@ -18,23 +18,23 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   DRAFT: 'outline',
   OPEN: 'warning',
   PAID: 'success',
-  OVERDUE: 'destructive',
+  OVERDUE: 'danger',
   CANCELLED: 'outline',
   REFUNDED: 'outline',
 }
 
-const PAYMENT_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const PAYMENT_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   PENDING: 'warning',
   PROCESSING: 'warning',
   PAID: 'success',
-  FAILED: 'destructive',
+  FAILED: 'danger',
   CANCELLED: 'outline',
   REFUNDED: 'outline',
-  CHARGEBACK: 'destructive',
+  CHARGEBACK: 'danger',
 }
 
 export default function InvoiceDetailPage() {

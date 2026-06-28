@@ -19,7 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   OPEN: 'warning',
   IN_PROGRESS: 'default',
   WAITING_CLIENT: 'outline',
@@ -27,11 +27,11 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destr
   CLOSED: 'outline',
 }
 
-const PRIORITY_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const PRIORITY_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   LOW: 'outline',
   MEDIUM: 'default',
   HIGH: 'warning',
-  CRITICAL: 'destructive',
+  CRITICAL: 'danger',
 }
 
 export default function SupportPage() {

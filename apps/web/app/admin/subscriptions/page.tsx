@@ -22,12 +22,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   TRIAL: 'warning',
   ACTIVE: 'success',
-  PAST_DUE: 'destructive',
+  PAST_DUE: 'danger',
   SUSPENDED: 'warning',
-  CANCELLED: 'destructive',
+  CANCELLED: 'danger',
   EXPIRED: 'outline',
 }
 

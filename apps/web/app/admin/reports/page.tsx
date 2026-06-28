@@ -79,9 +79,9 @@ const INV_LABELS: Record<string, string> = {
   DRAFT: 'Rascunho', OPEN: 'Em aberto', PAID: 'Pago',
   OVERDUE: 'Vencida', CANCELLED: 'Cancelada', REFUNDED: 'Reembolsada',
 }
-const INV_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const INV_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   DRAFT: 'outline', OPEN: 'warning', PAID: 'success',
-  OVERDUE: 'destructive', CANCELLED: 'outline', REFUNDED: 'outline',
+  OVERDUE: 'danger', CANCELLED: 'outline', REFUNDED: 'outline',
 }
 
 export default function ReportsPage() {

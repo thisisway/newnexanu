@@ -61,7 +61,7 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
       icon: FileText,
       label: `${counts.overdueInvoices} fatura${counts.overdueInvoices !== 1 ? 's' : ''} vencida${counts.overdueInvoices !== 1 ? 's' : ''}`,
       href: '/admin/invoices',
-      variant: 'destructive' as const,
+      variant: 'danger' as const,
     },
     counts.openTickets > 0 && {
       icon: HeadphonesIcon,
@@ -69,7 +69,7 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
       href: '/admin/support',
       variant: 'default' as const,
     },
-  ].filter(Boolean) as Array<{ icon: React.ComponentType<{ className?: string }>; label: string; href: string; variant: 'warning' | 'destructive' | 'default' }>
+  ].filter(Boolean) as Array<{ icon: React.ComponentType<{ className?: string }>; label: string; href: string; variant: 'warning' | 'danger' | 'default' }>
 
   return (
     <header
@@ -125,11 +125,11 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
                   >
                     <div className={cn(
                       'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                      n.variant === 'warning' ? 'bg-warning/10' : n.variant === 'destructive' ? 'bg-destructive/10' : 'bg-primary/10',
+                      n.variant === 'warning' ? 'bg-warning/10' : n.variant === 'danger' ? 'bg-danger/10' : 'bg-primary/10',
                     )}>
                       <Icon className={cn(
                         'h-4 w-4',
-                        n.variant === 'warning' ? 'text-warning' : n.variant === 'destructive' ? 'text-destructive' : 'text-primary',
+                        n.variant === 'warning' ? 'text-warning' : n.variant === 'danger' ? 'text-danger' : 'text-primary',
                       )} />
                     </div>
                     <span className="text-sm">{n.label}</span>

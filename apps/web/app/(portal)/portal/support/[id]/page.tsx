@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ArrowLeft, Send, X } from 'lucide-react'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'outline'> = {
   OPEN: 'warning', IN_PROGRESS: 'default', WAITING_CLIENT: 'outline', RESOLVED: 'success', CLOSED: 'outline',
 }
 

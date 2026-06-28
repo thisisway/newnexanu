@@ -15,19 +15,19 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 
-const ORDER_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const ORDER_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   PENDING: 'warning',
   ACTIVE: 'success',
   SUSPENDED: 'warning',
-  CANCELLED: 'destructive',
-  FRAUD: 'destructive',
+  CANCELLED: 'danger',
+  FRAUD: 'danger',
 }
 
-const INVOICE_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const INVOICE_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   DRAFT: 'outline',
   OPEN: 'warning',
   PAID: 'success',
-  OVERDUE: 'destructive',
+  OVERDUE: 'danger',
   CANCELLED: 'outline',
   REFUNDED: 'outline',
 }

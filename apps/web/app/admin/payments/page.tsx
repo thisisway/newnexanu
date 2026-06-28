@@ -21,14 +21,14 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   PENDING: 'warning',
   PROCESSING: 'warning',
   PAID: 'success',
-  FAILED: 'destructive',
+  FAILED: 'danger',
   CANCELLED: 'outline',
   REFUNDED: 'outline',
-  CHARGEBACK: 'destructive',
+  CHARGEBACK: 'danger',
 }
 
 const STATUS_LABELS: Record<Payment['status'], string> = {

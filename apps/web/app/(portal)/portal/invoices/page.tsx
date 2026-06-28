@@ -25,9 +25,9 @@ interface PortalInvoice {
   payments?: Array<{ id: string; status: string; pixCode?: string; method: string }>
 }
 
-const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   DRAFT: 'outline', OPEN: 'warning', PAID: 'success',
-  OVERDUE: 'destructive', CANCELLED: 'outline', REFUNDED: 'outline',
+  OVERDUE: 'danger', CANCELLED: 'outline', REFUNDED: 'outline',
 }
 
 export default function PortalInvoicesPage() {

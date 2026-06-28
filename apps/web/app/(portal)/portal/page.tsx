@@ -42,8 +42,8 @@ const CYCLE_PT: Record<string, string> = {
   ANNUAL: 'Anual', BIANNUAL: 'Bianual', ONE_TIME: 'Único',
 }
 
-const INV_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'outline', OPEN: 'warning', PAID: 'success', OVERDUE: 'destructive',
+const INV_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
+  DRAFT: 'outline', OPEN: 'warning', PAID: 'success', OVERDUE: 'danger',
   CANCELLED: 'outline', REFUNDED: 'outline',
 }
 

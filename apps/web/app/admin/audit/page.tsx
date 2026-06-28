@@ -22,10 +22,10 @@ interface AuditLog {
   user?: { id: string; name: string; email: string }
 }
 
-const ACTION_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
+const ACTION_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   CREATE: 'success',
   UPDATE: 'warning',
-  DELETE: 'destructive',
+  DELETE: 'danger',
   LOGIN: 'default',
   LOGOUT: 'outline',
 }

@@ -98,7 +98,7 @@ export function ClientSidebar({ collapsed = false }: ClientSidebarProps) {
             <span className="flex-1 truncate">{item.label}</span>
             {count > 0 && (
               <Badge
-                variant={item.badgeKey === 'openInvoices' ? 'warning' : 'destructive'}
+                variant={item.badgeKey === 'openInvoices' ? 'warning' : 'danger'}
                 className="h-5 min-w-5 justify-center text-[10px]"
               >
                 {count}

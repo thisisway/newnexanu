@@ -16,12 +16,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ClientFormDrawer } from '../components/client-form-drawer'
 
-const ORDER_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  PENDING: 'warning', ACTIVE: 'success', SUSPENDED: 'warning', CANCELLED: 'destructive', FRAUD: 'destructive',
+const ORDER_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
+  PENDING: 'warning', ACTIVE: 'success', SUSPENDED: 'warning', CANCELLED: 'danger', FRAUD: 'danger',
 }
 
-const INVOICE_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'destructive' | 'outline'> = {
-  DRAFT: 'outline', OPEN: 'warning', PAID: 'success', OVERDUE: 'destructive', CANCELLED: 'outline', REFUNDED: 'outline',
+const INVOICE_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
+  DRAFT: 'outline', OPEN: 'warning', PAID: 'success', OVERDUE: 'danger', CANCELLED: 'outline', REFUNDED: 'outline',
 }
 
 function Section({ title, children, action }: { title: string; children: React.ReactNode; action?: React.ReactNode }) {
