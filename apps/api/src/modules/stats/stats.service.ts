@@ -14,6 +14,7 @@ export class StatsService {
       overdueInvoices,
       pendingOrders,
       activeSubscriptions,
+      openTickets,
       activeOrderAmounts,
       recentOrders,
     ] = await Promise.all([
@@ -24,6 +25,7 @@ export class StatsService {
       }),
       this.prisma.order.count({ where: { organizationId, status: 'PENDING' } }),
       this.prisma.subscription.count({ where: { organizationId, status: 'ACTIVE' } }),
+      this.prisma.ticket.count({ where: { organizationId, status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
       this.prisma.order.findMany({
         where: { organizationId, status: 'ACTIVE' },
         select: { total: true, billingCycle: true },
@@ -50,6 +52,7 @@ export class StatsService {
       overdueInvoices,
       pendingOrders,
       activeSubscriptions,
+      openTickets,
       recentOrders,
     }
   }

@@ -1,8 +1,11 @@
 'use client'
 
-import { Bell, Sun, Moon } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Bell, Sun, Moon, FileText, HeadphonesIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { UserAvatar } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -14,7 +17,13 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAuth } from '@/hooks/use-auth'
+import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
+
+interface PortalCounts {
+  openInvoices: number
+  openTickets: number
+}
 
 interface ClientTopbarProps {
   className?: string
@@ -23,6 +32,34 @@ interface ClientTopbarProps {
 export function ClientTopbar({ className }: ClientTopbarProps) {
   const { theme, setTheme } = useTheme()
   const { user, logout } = useAuth()
+  const router = useRouter()
+  const [counts, setCounts] = useState<PortalCounts>({ openInvoices: 0, openTickets: 0 })
+
+  useEffect(() => {
+    api.get('/portal/dashboard').then((r) => {
+      setCounts({
+        openInvoices: r.data?.openInvoices ?? 0,
+        openTickets: r.data?.openTickets ?? 0,
+      })
+    }).catch(() => {})
+  }, [])
+
+  const totalAlerts = counts.openInvoices + counts.openTickets
+
+  const notifications = [
+    counts.openInvoices > 0 && {
+      icon: FileText,
+      label: `${counts.openInvoices} fatura${counts.openInvoices !== 1 ? 's' : ''} em aberto`,
+      href: '/portal/invoices',
+      variant: 'warning' as const,
+    },
+    counts.openTickets > 0 && {
+      icon: HeadphonesIcon,
+      label: `${counts.openTickets} chamado${counts.openTickets !== 1 ? 's' : ''} em aberto`,
+      href: '/portal/support',
+      variant: 'default' as const,
+    },
+  ].filter(Boolean) as Array<{ icon: React.ComponentType<{ className?: string }>; label: string; href: string; variant: 'warning' | 'default' }>
 
   return (
     <header
@@ -35,15 +72,46 @@ export function ClientTopbar({ className }: ClientTopbarProps) {
 
       <div className="flex items-center gap-1">
         {/* Notifications */}
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" className="relative">
               <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger" />
+              {totalAlerts > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
+                  {totalAlerts > 9 ? '9+' : totalAlerts}
+                </span>
+              )}
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Notificações</TooltipContent>
-        </Tooltip>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            <DropdownMenuLabel className="text-sm font-semibold">Notificações</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {notifications.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                Nenhuma notificação pendente.
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const Icon = n.icon
+                return (
+                  <DropdownMenuItem
+                    key={n.href}
+                    onClick={() => router.push(n.href)}
+                    className="flex items-center gap-3 px-3 py-2.5"
+                  >
+                    <div className={cn(
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
+                      n.variant === 'warning' ? 'bg-warning/10' : 'bg-primary/10',
+                    )}>
+                      <Icon className={cn('h-3.5 w-3.5', n.variant === 'warning' ? 'text-warning' : 'text-primary')} />
+                    </div>
+                    <span className="text-sm">{n.label}</span>
+                  </DropdownMenuItem>
+                )
+              })
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Theme toggle */}
         <Tooltip>
@@ -78,8 +146,8 @@ export function ClientTopbar({ className }: ClientTopbarProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a href="/portal/settings">Configurações da conta</a>
+            <DropdownMenuItem onClick={() => router.push('/portal/settings')}>
+              Configurações da conta
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem destructive onClick={logout}>

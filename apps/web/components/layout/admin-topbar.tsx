@@ -1,10 +1,13 @@
 'use client'
 
-import { Bell, Search, Sun, Moon, Menu } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Bell, Search, Sun, Moon, Menu, ShoppingCart, FileText, HeadphonesIcon } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { UserAvatar } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +18,14 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useAuth } from '@/hooks/use-auth'
+import { api } from '@/lib/api'
 import { cn } from '@/lib/utils'
+
+interface DashboardCounts {
+  pendingOrders: number
+  overdueInvoices: number
+  openTickets: number
+}
 
 interface AdminTopbarProps {
   onMenuToggle?: () => void
@@ -25,6 +35,41 @@ interface AdminTopbarProps {
 export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
   const { theme, setTheme } = useTheme()
   const { user, logout } = useAuth()
+  const router = useRouter()
+  const [counts, setCounts] = useState<DashboardCounts>({ pendingOrders: 0, overdueInvoices: 0, openTickets: 0 })
+
+  useEffect(() => {
+    api.get('/admin/stats/dashboard').then((r) => {
+      setCounts({
+        pendingOrders: r.data?.pendingOrders ?? 0,
+        overdueInvoices: r.data?.overdueInvoices ?? 0,
+        openTickets: r.data?.openTickets ?? 0,
+      })
+    }).catch(() => {})
+  }, [])
+
+  const totalAlerts = counts.pendingOrders + counts.overdueInvoices + counts.openTickets
+
+  const notifications = [
+    counts.pendingOrders > 0 && {
+      icon: ShoppingCart,
+      label: `${counts.pendingOrders} pedido${counts.pendingOrders !== 1 ? 's' : ''} pendente${counts.pendingOrders !== 1 ? 's' : ''}`,
+      href: '/admin/orders',
+      variant: 'warning' as const,
+    },
+    counts.overdueInvoices > 0 && {
+      icon: FileText,
+      label: `${counts.overdueInvoices} fatura${counts.overdueInvoices !== 1 ? 's' : ''} vencida${counts.overdueInvoices !== 1 ? 's' : ''}`,
+      href: '/admin/invoices',
+      variant: 'destructive' as const,
+    },
+    counts.openTickets > 0 && {
+      icon: HeadphonesIcon,
+      label: `${counts.openTickets} chamado${counts.openTickets !== 1 ? 's' : ''} aberto${counts.openTickets !== 1 ? 's' : ''}`,
+      href: '/admin/support',
+      variant: 'default' as const,
+    },
+  ].filter(Boolean) as Array<{ icon: React.ComponentType<{ className?: string }>; label: string; href: string; variant: 'warning' | 'destructive' | 'default' }>
 
   return (
     <header
@@ -51,15 +96,50 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
 
       <div className="ml-auto flex items-center gap-1">
         {/* Notifications */}
-        <Tooltip>
-          <TooltipTrigger asChild>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon-sm" className="relative">
               <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-danger" />
+              {totalAlerts > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
+                  {totalAlerts > 9 ? '9+' : totalAlerts}
+                </span>
+              )}
             </Button>
-          </TooltipTrigger>
-          <TooltipContent>Notificações</TooltipContent>
-        </Tooltip>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-72">
+            <DropdownMenuLabel className="text-sm font-semibold">Alertas</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {notifications.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                Tudo em dia! Nenhum alerta pendente.
+              </div>
+            ) : (
+              notifications.map((n) => {
+                const Icon = n.icon
+                return (
+                  <DropdownMenuItem
+                    key={n.href}
+                    onClick={() => router.push(n.href)}
+                    className="flex items-center gap-3 px-3 py-2.5"
+                  >
+                    <div className={cn(
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                      n.variant === 'warning' ? 'bg-warning/10' : n.variant === 'destructive' ? 'bg-destructive/10' : 'bg-primary/10',
+                    )}>
+                      <Icon className={cn(
+                        'h-4 w-4',
+                        n.variant === 'warning' ? 'text-warning' : n.variant === 'destructive' ? 'text-destructive' : 'text-primary',
+                      )} />
+                    </div>
+                    <span className="text-sm">{n.label}</span>
+                    <Badge variant={n.variant} className="ml-auto text-[10px]">Ver</Badge>
+                  </DropdownMenuItem>
+                )
+              })
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         {/* Theme toggle */}
         <Tooltip>
@@ -94,11 +174,11 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <a href="/admin/account">Minha conta</a>
+            <DropdownMenuItem onClick={() => router.push('/admin/account')}>
+              Minha conta
             </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <a href="/admin/settings">Configurações</a>
+            <DropdownMenuItem onClick={() => router.push('/admin/settings')}>
+              Configurações
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem destructive onClick={logout}>
