@@ -67,10 +67,11 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
 
   useEffect(() => {
     api.get('/admin/stats/dashboard').then((r) => {
+      const d = r.data?.data ?? r.data
       setCounts({
-        pendingOrders: r.data?.pendingOrders ?? 0,
-        overdueInvoices: r.data?.overdueInvoices ?? 0,
-        openTickets: r.data?.openTickets ?? 0,
+        pendingOrders: d?.pendingOrders ?? 0,
+        overdueInvoices: d?.overdueInvoices ?? 0,
+        openTickets: d?.openTickets ?? 0,
       })
     }).catch(() => {})
   }, [])
@@ -84,7 +85,7 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
     setSearching(true)
     try {
       const res = await api.get('/admin/stats/search', { params: { q } })
-      setResults(res.data)
+      setResults(res.data?.data ?? res.data)
       setSearchOpen(true)
     } catch {
       setResults(null)
