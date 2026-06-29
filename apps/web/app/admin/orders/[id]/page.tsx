@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import {
   ordersApi, invoicesApi, Order, Invoice,
-  ORDER_STATUS_LABELS, INVOICE_STATUS_LABELS, CYCLE_LABELS, formatCurrency,
+  ORDER_STATUS_LABELS, INVOICE_STATUS_LABELS, SUBSCRIPTION_STATUS_LABELS, CYCLE_LABELS, formatCurrency,
 } from '@/lib/api/orders'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -212,7 +212,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <p className="font-medium">{formatCurrency(inv.total)}</p>
-                        {inv.status === 'OPEN' && (
+                        {['OPEN', 'OVERDUE'].includes(inv.status) && (
                           <Button size="sm" variant="outline" onClick={() => handleMarkInvoicePaid(inv.id)}>
                             Marcar pago
                           </Button>
@@ -305,7 +305,7 @@ export default function OrderDetailPage() {
               </CardHeader>
               <CardContent>
                 <Badge variant={order.subscription.status === 'ACTIVE' ? 'success' : 'outline'}>
-                  {order.subscription.status}
+                  {(SUBSCRIPTION_STATUS_LABELS as Record<string, string>)[order.subscription.status] ?? order.subscription.status}
                 </Badge>
               </CardContent>
             </Card>

@@ -59,10 +59,7 @@ export default function AuditPage() {
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
 
-  const orgId = typeof window !== 'undefined' ? localStorage.getItem('nexano_org_id') : null
-
   const fetch = useCallback(async () => {
-    if (!orgId) return
     setLoading(true)
     try {
       const res = await api.get('/admin/audit-logs', {
@@ -83,7 +80,7 @@ export default function AuditPage() {
     } finally {
       setLoading(false)
     }
-  }, [orgId, page, search])
+  }, [page, search])
 
   useEffect(() => { fetch() }, [fetch])
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   ArrowLeft, CheckCircle, XCircle, CreditCard, User,
-  Calendar, Package, Receipt, Mail,
+  Calendar, Package, Receipt, Mail, Copy, Check,
 } from 'lucide-react'
 import {
   invoicesApi, paymentsApi, Invoice, Payment,
@@ -50,6 +50,13 @@ export default function InvoiceDetailPage() {
   const [generating, setGenerating] = useState(false)
   const [acting, setActing] = useState(false)
   const [sendingEmail, setSendingEmail] = useState(false)
+  const [copied, setCopied] = useState('')
+
+  function handleCopy(text: string, id: string) {
+    navigator.clipboard.writeText(text)
+    setCopied(id)
+    setTimeout(() => setCopied(''), 2000)
+  }
 
   async function refresh() {
     const [inv, pays] = await Promise.all([
@@ -249,9 +256,20 @@ export default function InvoiceDetailPage() {
                           </Badge>
                         </div>
                         {pay.pixCode && (
-                          <p className="mt-1 max-w-xs truncate font-mono text-xs text-muted-foreground">
-                            {pay.pixCode}
-                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <p className="max-w-xs truncate font-mono text-xs text-muted-foreground">
+                              {pay.pixCode}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(pay.pixCode!, pay.id)}
+                              className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            >
+                              {copied === pay.id
+                                ? <><Check className="h-3 w-3 text-success" /> Copiado!</>
+                                : <><Copy className="h-3 w-3" /> Copiar</>}
+                            </button>
+                          </div>
                         )}
                         <p className="text-xs text-muted-foreground">
                           {new Date(pay.createdAt).toLocaleString('pt-BR')}

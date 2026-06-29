@@ -36,6 +36,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/dashboard', request.url))
   }
 
+  // Redirect /admin (no path) to /admin/dashboard
+  if (pathname === '/admin') {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  }
+
   // Redirect authenticated users away from auth pages
   if (isPublic && token) {
     return NextResponse.redirect(new URL('/admin/dashboard', request.url))
