@@ -7,7 +7,7 @@ import {
   Plus, Trash2, Lock, Send,
   Pencil, ShoppingCart, ExternalLink,
 } from 'lucide-react'
-import { clientsApi, Client, ClientNote } from '@/lib/api/clients'
+import { clientsApi, Client, ClientNote, ClientContact } from '@/lib/api/clients'
 import { ordersApi, invoicesApi, Order, Invoice, ORDER_STATUS_LABELS, INVOICE_STATUS_LABELS, formatCurrency, CYCLE_LABELS } from '@/lib/api/orders'
 import { Button } from '@/components/ui/button'
 import { Badge, StatusBadge } from '@/components/ui/badge'

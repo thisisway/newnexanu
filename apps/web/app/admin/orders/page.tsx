@@ -38,13 +38,14 @@ export default function OrdersPage() {
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState(searchParams.get('status') ?? '')
+  const [clientId] = useState(searchParams.get('clientId') ?? '')
   const [page, setPage] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await ordersApi.list({ status: status || undefined, page, limit: 20 })
+      const res = await ordersApi.list({ status: status || undefined, clientId: clientId || undefined, page, limit: 20 })
       setOrders(res.data ?? res)
       if (res.total !== undefined) setMeta(res)
     } catch {
@@ -52,7 +53,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }, [status, page])
+  }, [status, clientId, page])
 
   useEffect(() => { fetchOrders() }, [fetchOrders])
 

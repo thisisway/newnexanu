@@ -37,12 +37,13 @@ export default function InvoicesPage() {
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState(searchParams.get('status') ?? '')
+  const [clientId] = useState(searchParams.get('clientId') ?? '')
   const [page, setPage] = useState(1)
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await invoicesApi.list({ status: status || undefined, page, limit: 20 })
+      const res = await invoicesApi.list({ status: status || undefined, clientId: clientId || undefined, page, limit: 20 })
       setInvoices(res.data ?? res)
       if (res.total !== undefined) setMeta(res)
     } catch {
@@ -50,7 +51,7 @@ export default function InvoicesPage() {
     } finally {
       setLoading(false)
     }
-  }, [status, page])
+  }, [status, clientId, page])
 
   useEffect(() => { fetchInvoices() }, [fetchInvoices])
 
