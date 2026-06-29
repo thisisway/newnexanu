@@ -28,9 +28,17 @@ export function middleware(request: NextRequest) {
     return response
   }
 
+  // Server-side redirect from root: no token → login, with token → dashboard
+  if (pathname === '/') {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  }
+
   // Redirect authenticated users away from auth pages
   if (isPublic && token) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
   }
 
   // Protect admin and portal routes
