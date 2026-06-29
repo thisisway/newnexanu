@@ -38,7 +38,8 @@ export default function NewTicketPage() {
     setSubmitting(true)
     setError('')
     try {
-      const ticket = await portalTicketsApi.create(values)
+      const res = await portalTicketsApi.create(values)
+      const ticket = res?.data ?? res
       router.push(`/portal/support/${ticket.id}`)
     } catch {
       setError('Ocorreu um erro ao abrir o chamado. Tente novamente.')
