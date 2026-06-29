@@ -49,9 +49,10 @@ export function ClientSidebar({ collapsed = false }: ClientSidebarProps) {
 
   useEffect(() => {
     api.get('/portal/dashboard').then((r) => {
+      const d = r.data?.data ?? r.data
       setCounts({
-        openInvoices: r.data?.openInvoices ?? 0,
-        openTickets: r.data?.openTickets ?? 0,
+        openInvoices: d?.openInvoices ?? 0,
+        openTickets: d?.openTickets ?? 0,
       })
     }).catch(() => {})
   }, [])

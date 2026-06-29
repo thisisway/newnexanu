@@ -63,8 +63,8 @@ export default function PortalHomePage() {
       api.get('/portal/dashboard'),
       api.get('/portal/orders'),
     ]).then(([dash, ord]) => {
-      setData(dash.data)
-      setOrders(ord.data)
+      setData(dash.data?.data ?? dash.data)
+      setOrders(ord.data?.data ?? ord.data ?? [])
     }).catch((e) => {
       if (e?.response?.status === 404) setNoProfile(true)
     }).finally(() => setLoading(false))
