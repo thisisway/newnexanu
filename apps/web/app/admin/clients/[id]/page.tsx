@@ -97,6 +97,7 @@ export default function ClientDetailPage() {
   }
 
   async function handleDeleteNote(noteId: string) {
+    if (!confirm('Excluir esta nota?')) return
     await clientsApi.deleteNote(id, noteId)
     load()
   }

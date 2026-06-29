@@ -56,7 +56,8 @@ export default function InvoicesPage() {
   useEffect(() => { fetchInvoices() }, [fetchInvoices])
 
   async function handleMarkPaid(id: string) {
-    await invoicesApi.markPaid(id)
+    if (!confirm('Marcar como paga manualmente? Use somente para conciliação.')) return
+    try { await invoicesApi.markPaid(id) } catch { alert('Erro ao marcar fatura como paga.') }
     fetchInvoices()
   }
 

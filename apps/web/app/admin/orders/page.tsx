@@ -58,13 +58,14 @@ export default function OrdersPage() {
   useEffect(() => { fetchOrders() }, [fetchOrders])
 
   async function handleActivate(id: string) {
-    await ordersApi.activate(id)
+    if (!confirm('Ativar este pedido? Isso criará uma assinatura ativa para o cliente.')) return
+    try { await ordersApi.activate(id) } catch { alert('Erro ao ativar pedido.') }
     fetchOrders()
   }
 
   async function handleCancel(id: string) {
     if (!confirm('Cancelar este pedido?')) return
-    await ordersApi.cancel(id)
+    try { await ordersApi.cancel(id) } catch { alert('Erro ao cancelar pedido.') }
     fetchOrders()
   }
 
