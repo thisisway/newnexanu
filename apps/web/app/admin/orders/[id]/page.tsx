@@ -50,7 +50,7 @@ export default function OrderDetailPage() {
       ordersApi.get(id),
       invoicesApi.list({ orderId: id, limit: 50 }),
     ]).then(([ord, inv]) => {
-      setOrder(ord)
+      setOrder(ord.data ?? ord)
       setInvoices(inv.data ?? inv)
     }).finally(() => setLoading(false))
   }, [id])
@@ -59,8 +59,9 @@ export default function OrderDetailPage() {
     if (!order || !confirm('Ativar este pedido? Isso criará uma assinatura ativa para o cliente.')) return
     setActing(true)
     try {
-      const updated = await ordersApi.activate(order.id)
-      setOrder(updated)
+      await ordersApi.activate(order.id)
+      const refreshed = await ordersApi.get(order.id)
+      setOrder(refreshed.data ?? refreshed)
     } finally {
       setActing(false)
     }
@@ -70,8 +71,9 @@ export default function OrderDetailPage() {
     if (!order || !confirm('Cancelar este pedido?')) return
     setActing(true)
     try {
-      const updated = await ordersApi.cancel(order.id)
-      setOrder(updated)
+      await ordersApi.cancel(order.id)
+      const refreshed = await ordersApi.get(order.id)
+      setOrder(refreshed.data ?? refreshed)
     } finally {
       setActing(false)
     }

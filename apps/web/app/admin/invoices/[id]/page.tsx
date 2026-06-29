@@ -63,7 +63,7 @@ export default function InvoiceDetailPage() {
       invoicesApi.get(id),
       paymentsApi.list({ invoiceId: id }),
     ])
-    setInvoice(inv)
+    setInvoice(inv.data ?? inv)
     setPayments(pays.data ?? pays)
   }
 

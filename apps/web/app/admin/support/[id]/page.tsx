@@ -32,7 +32,7 @@ export default function TicketDetailPage() {
 
   async function load() {
     const data = await ticketsApi.get(id)
-    setTicket(data)
+    setTicket(data.data ?? data)
   }
 
   useEffect(() => {

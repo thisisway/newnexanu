@@ -90,7 +90,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     api.get('/admin/stats/reports')
-      .then((r) => setData(r.data))
+      .then((r) => setData(r.data?.data ?? r.data))
       .finally(() => setLoading(false))
   }, [])
 

@@ -75,7 +75,7 @@ export default function ServicesPage() {
       ])
       setServices(res.data.data ?? [])
       setMeta({ total: res.data.total, page: res.data.page, limit: res.data.limit, totalPages: res.data.totalPages })
-      if (statsRes) setStats(statsRes.data)
+      if (statsRes) setStats(statsRes.data?.data ?? statsRes.data)
     } catch { /* noop */ }
     finally { setLoading(false) }
   }, [page, status, search])
@@ -94,7 +94,7 @@ export default function ServicesPage() {
       await api.post(`/admin/services/${svcId}/${action}`)
       await load()
       const statsRes = await api.get('/admin/services/stats')
-      setStats(statsRes.data)
+      setStats(statsRes.data?.data ?? statsRes.data)
     } catch { /* noop */ }
     finally { setActing(null) }
   }

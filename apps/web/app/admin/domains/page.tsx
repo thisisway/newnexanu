@@ -174,7 +174,7 @@ export default function DomainsPage() {
       ])
       setDomains(domainsRes.data.data ?? [])
       setMeta(domainsRes.data.meta ?? meta)
-      setStats(statsRes.data ?? stats)
+      setStats(statsRes.data?.data ?? statsRes.data ?? stats)
     } finally {
       setLoading(false)
     }

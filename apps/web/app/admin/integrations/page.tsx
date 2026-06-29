@@ -238,7 +238,7 @@ export default function IntegrationsPage() {
   const load = useCallback(async () => {
     try {
       const res = await api.get('/admin/integrations')
-      setConfigs(res.data ?? {})
+      setConfigs(res.data?.data ?? res.data ?? {})
     } catch { /* noop */ }
     finally { setLoading(false) }
   }, [])

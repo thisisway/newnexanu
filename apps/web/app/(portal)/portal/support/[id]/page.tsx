@@ -27,7 +27,7 @@ export default function PortalTicketDetailPage() {
 
   async function load() {
     const data = await portalTicketsApi.get(id)
-    setTicket(data)
+    setTicket(data.data ?? data)
   }
 
   useEffect(() => {

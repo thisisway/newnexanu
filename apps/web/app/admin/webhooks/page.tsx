@@ -213,7 +213,7 @@ export default function WebhooksPage() {
     setTesting(id)
     try {
       const res = await api.post(`/admin/webhooks/${id}/test`)
-      const data = res.data
+      const data = res.data?.data ?? res.data
       if (data.success) {
         toast({ title: `Teste OK — HTTP ${data.statusCode}` })
       } else {

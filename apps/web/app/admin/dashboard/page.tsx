@@ -47,7 +47,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     api.get('/admin/stats/dashboard')
-      .then((r) => setStats(r.data))
+      .then((r) => setStats(r.data?.data ?? r.data))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])

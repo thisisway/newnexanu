@@ -90,7 +90,7 @@ function NewKeyDialog({ open, onClose, onCreated }: {
     setSaving(true)
     try {
       const res = await api.post('/admin/api-keys', { name: name.trim(), scopes, expiresAt: expiresAt || undefined })
-      onCreated(res.data.rawKey)
+      onCreated((res.data?.data ?? res.data).rawKey)
       onClose()
     } catch {
       toast({ title: 'Erro ao criar chave', variant: 'destructive' })
@@ -198,7 +198,7 @@ export default function ApiPage() {
     setLoading(true)
     try {
       const res = await api.get('/admin/api-keys')
-      setKeys(res.data ?? [])
+      setKeys(res.data?.data ?? res.data ?? [])
     } finally {
       setLoading(false)
     }

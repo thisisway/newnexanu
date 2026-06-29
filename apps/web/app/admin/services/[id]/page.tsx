@@ -52,8 +52,9 @@ export default function ServiceDetailPage() {
 
   async function refresh() {
     const res = await api.get(`/admin/services/${id}`)
-    setSvc(res.data)
-    setNotes(res.data.notes ?? '')
+    const svcData = res.data?.data ?? res.data
+    setSvc(svcData)
+    setNotes(svcData.notes ?? '')
   }
 
   useEffect(() => { refresh().finally(() => setLoading(false)) }, [id])
