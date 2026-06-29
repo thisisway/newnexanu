@@ -5,10 +5,11 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Building2, User, FileText,
   Plus, Trash2, Lock, Send,
-  Pencil, ShoppingCart, ExternalLink,
+  Pencil, ShoppingCart, ExternalLink, HeadphonesIcon,
 } from 'lucide-react'
 import { clientsApi, Client, ClientNote, ClientContact } from '@/lib/api/clients'
 import { ordersApi, invoicesApi, Order, Invoice, ORDER_STATUS_LABELS, INVOICE_STATUS_LABELS, formatCurrency, CYCLE_LABELS } from '@/lib/api/orders'
+import { ticketsApi, Ticket, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from '@/lib/api/tickets'
 import { Button } from '@/components/ui/button'
 import { Badge, StatusBadge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -16,6 +17,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ClientFormDrawer } from '../components/client-form-drawer'
 import { ContactFormDrawer } from '../components/contact-form-drawer'
+import { TicketFormDrawer } from '../../support/components/ticket-form-drawer'
 
 const ORDER_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   PENDING: 'warning', ACTIVE: 'success', SUSPENDED: 'warning', CANCELLED: 'danger', FRAUD: 'danger',
@@ -52,11 +54,13 @@ export default function ClientDetailPage() {
   const [client, setClient] = useState<Client | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [noteContent, setNoteContent] = useState('')
   const [sendingNote, setSendingNote] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [contactDrawer, setContactDrawer] = useState<{ open: boolean; contact?: ClientContact }>({ open: false })
+  const [ticketDrawerOpen, setTicketDrawerOpen] = useState(false)
 
   useEffect(() => {
     load()
@@ -65,14 +69,16 @@ export default function ClientDetailPage() {
   async function load() {
     setLoading(true)
     try {
-      const [clientData, ordersData, invoicesData] = await Promise.all([
+      const [clientData, ordersData, invoicesData, ticketsData] = await Promise.all([
         clientsApi.get(id),
         ordersApi.list({ clientId: id, limit: 5 }),
         invoicesApi.list({ clientId: id, limit: 5 }),
+        ticketsApi.list({ clientId: id, limit: 5 }),
       ])
       setClient(clientData.data ?? clientData)
       setOrders(ordersData.data ?? ordersData)
       setInvoices(invoicesData.data ?? invoicesData)
+      setTickets(ticketsData.data ?? ticketsData)
     } finally {
       setLoading(false)
     }
@@ -304,6 +310,7 @@ export default function ClientDetailPage() {
                   value: formatCurrency(invoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + Number(i.total), 0)),
                 },
                 { label: 'Assinaturas ativas', value: String(orders.filter((o) => o.subscription?.status === 'ACTIVE').length) },
+                { label: 'Chamados abertos', value: String(tickets.filter((t) => ['OPEN', 'IN_PROGRESS'].includes(t.status)).length) },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">{label}</span>
@@ -405,6 +412,61 @@ export default function ClientDetailPage() {
         )}
       </Section>
 
+      {/* Tickets */}
+      <Section
+        title={`Chamados (${tickets.length})`}
+        action={
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push(`/admin/support?clientId=${id}`)}
+              className="text-xs text-primary hover:underline"
+            >
+              Ver todos
+            </button>
+            <Button variant="ghost" size="icon-sm" onClick={() => setTicketDrawerOpen(true)}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        }
+      >
+        {tickets.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-4 text-center">
+            <p className="text-sm text-muted-foreground">Nenhum chamado.</p>
+            <Button size="sm" variant="outline" onClick={() => setTicketDrawerOpen(true)}>
+              <Plus className="mr-2 h-3.5 w-3.5" /> Abrir chamado
+            </Button>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {tickets.map((ticket) => (
+              <div
+                key={ticket.id}
+                className="flex cursor-pointer items-center justify-between gap-4 py-3 -mx-1 px-1 rounded-lg transition-colors hover:bg-muted/20"
+                onClick={() => router.push(`/admin/support/${ticket.id}`)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <HeadphonesIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{ticket.subject}</p>
+                    <p className="text-xs text-muted-foreground">
+                      #{ticket.number} · {new Date(ticket.createdAt).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant={ticket.status === 'OPEN' ? 'warning' : ticket.status === 'IN_PROGRESS' ? 'default' : ticket.status === 'RESOLVED' ? 'success' : 'outline'} className="text-xs">
+                    {TICKET_STATUS_LABELS[ticket.status]}
+                  </Badge>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
       <ClientFormDrawer
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -418,6 +480,13 @@ export default function ClientDetailPage() {
         onSuccess={() => { setContactDrawer({ open: false }); load() }}
         clientId={id}
         contact={contactDrawer.contact}
+      />
+
+      <TicketFormDrawer
+        open={ticketDrawerOpen}
+        onClose={() => setTicketDrawerOpen(false)}
+        onSuccess={() => { setTicketDrawerOpen(false); load() }}
+        preselectedClientId={id}
       />
     </div>
   )

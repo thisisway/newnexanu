@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   HeadphonesIcon, RefreshCw, MoreHorizontal, Clock,
   AlertTriangle, CheckCircle, TrendingUp, Plus,
@@ -37,6 +37,7 @@ const PRIORITY_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dan
 
 export default function SupportPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
   const [loading, setLoading] = useState(true)
@@ -44,6 +45,7 @@ export default function SupportPage() {
   const [priority, setPriority] = useState('')
   const [page, setPage] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [clientId] = useState(searchParams.get('clientId') ?? '')
 
   const fetch = useCallback(async () => {
     setLoading(true)
@@ -51,6 +53,7 @@ export default function SupportPage() {
       const res = await ticketsApi.list({
         status: status || undefined,
         priority: priority || undefined,
+        clientId: clientId || undefined,
         page,
         limit: 20,
       })
@@ -59,7 +62,7 @@ export default function SupportPage() {
     } finally {
       setLoading(false)
     }
-  }, [status, priority, page])
+  }, [status, priority, clientId, page])
 
   useEffect(() => { fetch() }, [fetch])
 
@@ -183,6 +186,7 @@ export default function SupportPage() {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         onSuccess={() => { setDrawerOpen(false); fetch() }}
+        preselectedClientId={clientId || undefined}
       />
 
       <div className="flex items-start justify-between">

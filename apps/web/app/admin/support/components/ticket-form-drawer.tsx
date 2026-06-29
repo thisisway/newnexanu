@@ -64,7 +64,14 @@ export function TicketFormDrawer({ open, onClose, onSuccess, preselectedClientId
     reset({ priority: 'MEDIUM', clientId: preselectedClientId ?? '' })
     setError('')
     setClientSearch('')
-    clientsApi.list({ limit: 200 }).then((res) => setClients(res.data ?? res)).catch(() => {})
+    clientsApi.list({ limit: 200 }).then((res) => {
+      const list = res.data ?? res
+      setClients(list)
+      if (preselectedClientId) {
+        const found = list.find((c: { id: string; name: string }) => c.id === preselectedClientId)
+        if (found) setClientSearch(found.name)
+      }
+    }).catch(() => {})
   }, [open, preselectedClientId, reset])
 
   async function onSubmit(data: FormData) {
@@ -117,7 +124,7 @@ export function TicketFormDrawer({ open, onClose, onSuccess, preselectedClientId
                   onChange={(e) => setClientSearch(e.target.value)}
                 />
               </div>
-              {clientSearch && filteredClients.length > 0 && (
+              {(clientSearch || clientId) && filteredClients.length > 0 && (
                 <div className="max-h-40 overflow-y-auto rounded-lg border border-border bg-card">
                   {filteredClients.slice(0, 15).map((c) => (
                     <button

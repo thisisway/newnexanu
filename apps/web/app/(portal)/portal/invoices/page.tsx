@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatCurrency, INVOICE_STATUS_LABELS } from '@/lib/api/orders'
-import { FileText, CheckCircle2, CreditCard } from 'lucide-react'
+import { FileText, CheckCircle2, CreditCard, Copy, Check } from 'lucide-react'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -34,6 +34,14 @@ export default function PortalInvoicesPage() {
   const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
   const [generating, setGenerating] = useState<string | null>(null)
+  const [copied, setCopied] = useState<string | null>(null)
+
+  function handleCopy(pixCode: string, paymentId: string) {
+    navigator.clipboard.writeText(pixCode).then(() => {
+      setCopied(paymentId)
+      setTimeout(() => setCopied(null), 2000)
+    })
+  }
 
   const fetch = useCallback(async () => {
     setLoading(true)
@@ -127,7 +135,17 @@ export default function PortalInvoicesPage() {
                         </p>
                         {pendingPix && (
                           <div className="mt-2 rounded-lg bg-muted p-2">
-                            <p className="text-[10px] font-medium text-muted-foreground mb-1">Chave PIX Copia e Cola:</p>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-[10px] font-medium text-muted-foreground">Chave PIX Copia e Cola:</p>
+                              <button
+                                onClick={() => handleCopy(pendingPix.pixCode!, pendingPix.id)}
+                                className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-background"
+                              >
+                                {copied === pendingPix.id
+                                  ? <><Check className="h-3 w-3 text-success" /> Copiado!</>
+                                  : <><Copy className="h-3 w-3" /> Copiar</>}
+                              </button>
+                            </div>
                             <p className="break-all font-mono text-xs text-foreground select-all">
                               {pendingPix.pixCode}
                             </p>
