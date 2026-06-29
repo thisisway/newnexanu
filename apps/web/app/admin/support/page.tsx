@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   HeadphonesIcon, RefreshCw, MoreHorizontal, Clock,
-  AlertTriangle, CheckCircle, TrendingUp,
+  AlertTriangle, CheckCircle, TrendingUp, Plus,
 } from 'lucide-react'
 import { ticketsApi, Ticket, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from '@/lib/api/tickets'
+import { TicketFormDrawer } from './components/ticket-form-drawer'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DataTable, Pagination, Column } from '@/components/ui/data-table'
@@ -42,6 +43,7 @@ export default function SupportPage() {
   const [status, setStatus] = useState('')
   const [priority, setPriority] = useState('')
   const [page, setPage] = useState(1)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const fetch = useCallback(async () => {
     setLoading(true)
@@ -177,6 +179,12 @@ export default function SupportPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <TicketFormDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSuccess={() => { setDrawerOpen(false); fetch() }}
+      />
+
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-h2 font-semibold text-foreground">Suporte</h1>
@@ -184,6 +192,9 @@ export default function SupportPage() {
             Gerencie os chamados de suporte dos seus clientes.
           </p>
         </div>
+        <Button onClick={() => setDrawerOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" /> Novo chamado
+        </Button>
       </div>
 
       {/* Summary */}

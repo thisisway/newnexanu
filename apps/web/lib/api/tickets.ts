@@ -51,6 +51,9 @@ export const ticketsApi = {
   get: (id: string) =>
     api.get(`/admin/tickets/${id}`).then((r) => r.data),
 
+  create: (data: { clientId?: string; subject: string; body: string; priority?: string; category?: string }) =>
+    api.post('/admin/tickets', data).then((r) => r.data),
+
   update: (id: string, data: Partial<{ status: string; priority: string; assignedToId: string | null; category: string }>) =>
     api.patch(`/admin/tickets/${id}`, data).then((r) => r.data),
 

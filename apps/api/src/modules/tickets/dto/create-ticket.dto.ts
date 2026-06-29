@@ -1,6 +1,10 @@
 import { IsString, IsOptional, IsEnum, MinLength } from 'class-validator'
 
 export class CreateTicketDto {
+  @IsOptional()
+  @IsString()
+  clientId?: string
+
   @IsString()
   @MinLength(5, { message: 'Assunto deve ter ao menos 5 caracteres.' })
   subject: string

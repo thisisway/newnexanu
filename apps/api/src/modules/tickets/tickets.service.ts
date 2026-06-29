@@ -77,6 +77,7 @@ export class TicketsService {
         subject: dto.subject,
         priority: (dto.priority ?? 'MEDIUM') as any,
         category: dto.category,
+        ...(dto.clientId && { clientId: dto.clientId }),
         messages: { create: { userId, body: dto.body } },
       },
       include: TICKET_INCLUDE,
