@@ -44,6 +44,9 @@ export function ProductFormDrawer({ open, onClose, onSuccess, product, categorie
   })
 
   const nameValue = watch('name')
+  const typeValue = watch('type')
+  const statusValue = watch('status')
+  const categoryIdValue = watch('categoryId')
 
   useEffect(() => {
     if (!isEdit && nameValue) {
@@ -123,7 +126,7 @@ export function ProductFormDrawer({ open, onClose, onSuccess, product, categorie
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Tipo</label>
-                <Select defaultValue={product?.type ?? 'SERVICE'} onValueChange={(v) => setValue('type', v as any)}>
+                <Select value={typeValue} onValueChange={(v) => setValue('type', v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="HOSTING">🌐 Hospedagem</SelectItem>
@@ -139,7 +142,7 @@ export function ProductFormDrawer({ open, onClose, onSuccess, product, categorie
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Status</label>
-                <Select defaultValue={product?.status ?? 'ACTIVE'} onValueChange={(v) => setValue('status', v as any)}>
+                <Select value={statusValue ?? 'ACTIVE'} onValueChange={(v) => setValue('status', v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ACTIVE">Ativo</SelectItem>
@@ -152,7 +155,7 @@ export function ProductFormDrawer({ open, onClose, onSuccess, product, categorie
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">Categoria</label>
-              <Select defaultValue={product?.categoryId ?? ''} onValueChange={(v) => setValue('categoryId', v)}>
+              <Select value={categoryIdValue ?? ''} onValueChange={(v) => setValue('categoryId', v)}>
                 <SelectTrigger><SelectValue placeholder="Sem categoria" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Sem categoria</SelectItem>

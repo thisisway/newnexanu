@@ -66,6 +66,7 @@ export function PlanFormDrawer({ open, onClose, onSuccess, plan, productId }: Pl
 
   const { fields, append, remove } = useFieldArray({ control, name: 'prices' })
   const nameValue = watch('name')
+  const statusValue = watch('status')
 
   useEffect(() => {
     if (!isEdit && nameValue) {
@@ -153,7 +154,7 @@ export function PlanFormDrawer({ open, onClose, onSuccess, plan, productId }: Pl
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Status</label>
-                <Select defaultValue={plan?.status ?? 'ACTIVE'} onValueChange={(v) => setValue('status', v as any)}>
+                <Select value={statusValue} onValueChange={(v) => setValue('status', v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ACTIVE">Ativo</SelectItem>

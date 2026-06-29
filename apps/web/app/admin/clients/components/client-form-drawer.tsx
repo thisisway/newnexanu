@@ -49,6 +49,8 @@ export function ClientFormDrawer({ open, onClose, onSuccess, client }: ClientFor
   })
 
   const type = watch('type')
+  const statusValue = watch('status')
+  const documentTypeValue = watch('documentType')
 
   useEffect(() => {
     if (open) {
@@ -120,7 +122,7 @@ export function ClientFormDrawer({ open, onClose, onSuccess, client }: ClientFor
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Status</label>
-                <Select defaultValue="ACTIVE" onValueChange={(v) => setValue('status', v as any)}>
+                <Select value={statusValue ?? 'ACTIVE'} onValueChange={(v) => setValue('status', v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ACTIVE">Ativo</SelectItem>
@@ -135,7 +137,7 @@ export function ClientFormDrawer({ open, onClose, onSuccess, client }: ClientFor
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-foreground">Tipo de documento</label>
-                <Select onValueChange={(v) => setValue('documentType', v as any)}>
+                <Select value={documentTypeValue ?? ''} onValueChange={(v) => setValue('documentType', v as any)}>
                   <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="CPF">CPF</SelectItem>
