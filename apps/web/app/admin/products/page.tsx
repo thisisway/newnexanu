@@ -48,8 +48,8 @@ export default function ProductsPage() {
         productsApi.list({ search: search || undefined, status: status || undefined, categoryId: categoryId || undefined, page, limit: 20 }),
         productsApi.listCategories(),
       ])
-      setProducts(prodRes.data)
-      setMeta(prodRes.meta)
+      setProducts(prodRes.data ?? [])
+      if (prodRes.total !== undefined) setMeta(prodRes)
       setCategories(catRes.data ?? catRes)
     } finally {
       setLoading(false)

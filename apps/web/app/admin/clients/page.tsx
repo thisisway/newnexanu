@@ -36,8 +36,8 @@ export default function ClientsPage() {
     setLoading(true)
     try {
       const res = await clientsApi.list({ search: search || undefined, status: status || undefined, type: type || undefined, page, limit: 20 })
-      setClients(res.data)
-      setMeta(res.meta)
+      setClients(res.data ?? [])
+      if (res.total !== undefined) setMeta(res)
     } catch {
       // handled by interceptor
     } finally {
