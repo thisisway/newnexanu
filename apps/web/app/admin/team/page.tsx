@@ -64,8 +64,9 @@ export default function TeamPage() {
         api.get('/admin/team'),
         api.get('/admin/roles'),
       ])
-      setMembers(membersRes.data)
-      setRoles(rolesRes.data)
+      setMembers(membersRes.data?.data ?? membersRes.data ?? [])
+      const rolesData = rolesRes.data?.data ?? rolesRes.data ?? {}
+      setRoles([...(rolesData.systemRoles ?? []), ...(rolesData.customRoles ?? [])])
     } finally {
       setLoading(false)
     }

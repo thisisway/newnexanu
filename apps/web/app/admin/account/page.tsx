@@ -59,8 +59,9 @@ export default function AdminAccountPage() {
 
   useEffect(() => {
     api.get('/account/profile').then((r) => {
-      profileForm.reset({ name: r.data.name })
-      setProfileEmail(r.data.email ?? '')
+      const profile = r.data?.data ?? r.data
+      profileForm.reset({ name: profile.name })
+      setProfileEmail(profile.email ?? '')
     }).catch(() => {})
   }, [])
 

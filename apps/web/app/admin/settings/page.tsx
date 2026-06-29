@@ -78,10 +78,10 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!orgId) return
     api.get(`/admin/organizations/${orgId}`).then((r) => {
-      const org = r.data
+      const org = r.data?.data ?? r.data
       orgForm.reset({ name: org.name, slug: org.slug, domain: org.domain ?? '' })
     }).finally(() => setOrgLoading(false))
-    api.get('/admin/settings/mail').then((r) => setSmtpInfo(r.data)).catch(() => {})
+    api.get('/admin/settings/mail').then((r) => setSmtpInfo(r.data?.data ?? r.data)).catch(() => {})
   }, [orgId])
 
   useEffect(() => {
