@@ -103,9 +103,8 @@ export class InvoicesService {
   }
 
   async getOverdue(organizationId: string) {
-    const now = new Date()
     return this.prisma.invoice.findMany({
-      where: { organizationId, status: 'OPEN', dueDate: { lt: now } },
+      where: { organizationId, status: 'OVERDUE' },
       include: { client: { select: { id: true, name: true, email: true } } },
       orderBy: { dueDate: 'asc' },
     })
