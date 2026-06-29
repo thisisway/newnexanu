@@ -13,7 +13,6 @@ import { CheckCircle } from 'lucide-react'
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
-  email: z.string().email('E-mail inválido'),
 })
 
 const passwordSchema = z.object({
@@ -43,10 +42,11 @@ export default function PortalSettingsPage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [profileError, setProfileError] = useState('')
   const [passwordError, setPasswordError] = useState('')
+  const [profileEmail, setProfileEmail] = useState('')
 
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: '', email: '' },
+    defaultValues: { name: '' },
   })
 
   const passwordForm = useForm<PasswordValues>({
@@ -55,7 +55,8 @@ export default function PortalSettingsPage() {
 
   useEffect(() => {
     api.get('/account/profile').then((r) => {
-      profileForm.reset({ name: r.data.name, email: r.data.email })
+      profileForm.reset({ name: r.data.name })
+      setProfileEmail(r.data.email ?? '')
     }).catch(() => {})
   }, [])
 
@@ -109,7 +110,7 @@ export default function PortalSettingsPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" {...profileForm.register('email')} disabled className="opacity-60 cursor-not-allowed" />
+              <Input id="email" type="email" value={profileEmail} readOnly disabled className="opacity-60 cursor-not-allowed" />
               <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado diretamente.</p>
             </div>
             {profileError && <p className="text-sm text-destructive">{profileError}</p>}

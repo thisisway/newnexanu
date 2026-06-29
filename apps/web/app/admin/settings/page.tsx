@@ -22,7 +22,6 @@ const orgSchema = z.object({
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
-  email: z.string().email('E-mail inválido'),
 })
 
 const passwordSchema = z.object({
@@ -72,7 +71,7 @@ export default function SettingsPage() {
   const orgForm = useForm<OrgForm>({ resolver: zodResolver(orgSchema) })
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { name: user?.name ?? '', email: user?.email ?? '' },
+    defaultValues: { name: user?.name ?? '' },
   })
   const pwForm = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) })
 
@@ -86,7 +85,7 @@ export default function SettingsPage() {
   }, [orgId])
 
   useEffect(() => {
-    if (user) profileForm.reset({ name: user.name, email: user.email })
+    if (user) profileForm.reset({ name: user.name })
   }, [user])
 
   async function onSendTestEmail() {
@@ -216,10 +215,11 @@ export default function SettingsPage() {
             <Input
               label="E-mail"
               type="email"
+              value={user?.email ?? ''}
+              readOnly
               disabled
               className="opacity-60 cursor-not-allowed"
               hint="O e-mail não pode ser alterado diretamente."
-              {...profileForm.register('email')}
             />
             {profileError && <p className="text-sm text-destructive">{profileError}</p>}
             <div className="flex items-center gap-3">
