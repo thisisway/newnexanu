@@ -41,7 +41,7 @@ export default function SupportPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState(searchParams.get('status') ?? '')
   const [priority, setPriority] = useState('')
   const [page, setPage] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)

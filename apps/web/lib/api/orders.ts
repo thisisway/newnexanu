@@ -196,6 +196,16 @@ export const INVOICE_STATUS_LABELS: Record<Invoice['status'], string> = {
   REFUNDED: 'Reembolsada',
 }
 
+export const PAYMENT_STATUS_LABELS: Record<Payment['status'], string> = {
+  PENDING: 'Pendente',
+  PROCESSING: 'Processando',
+  PAID: 'Pago',
+  FAILED: 'Falhou',
+  CANCELLED: 'Cancelado',
+  REFUNDED: 'Reembolsado',
+  CHARGEBACK: 'Estorno',
+}
+
 export const PAYMENT_METHOD_LABELS: Record<Payment['method'], string> = {
   PIX: 'PIX',
   CREDIT_CARD: 'Cartão de crédito',

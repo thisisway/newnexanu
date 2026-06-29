@@ -135,19 +135,19 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
     counts.pendingOrders > 0 && {
       icon: ShoppingCart,
       label: `${counts.pendingOrders} pedido${counts.pendingOrders !== 1 ? 's' : ''} pendente${counts.pendingOrders !== 1 ? 's' : ''}`,
-      href: '/admin/orders',
+      href: '/admin/orders?status=PENDING',
       variant: 'warning' as const,
     },
     counts.overdueInvoices > 0 && {
       icon: FileText,
       label: `${counts.overdueInvoices} fatura${counts.overdueInvoices !== 1 ? 's' : ''} vencida${counts.overdueInvoices !== 1 ? 's' : ''}`,
-      href: '/admin/invoices',
+      href: '/admin/invoices?status=OVERDUE',
       variant: 'danger' as const,
     },
     counts.openTickets > 0 && {
       icon: HeadphonesIcon,
       label: `${counts.openTickets} chamado${counts.openTickets !== 1 ? 's' : ''} aberto${counts.openTickets !== 1 ? 's' : ''}`,
-      href: '/admin/support',
+      href: '/admin/support?status=OPEN',
       variant: 'default' as const,
     },
   ].filter(Boolean) as Array<{ icon: React.ComponentType<{ className?: string }>; label: string; href: string; variant: 'warning' | 'danger' | 'default' }>

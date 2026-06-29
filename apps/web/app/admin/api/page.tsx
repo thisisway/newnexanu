@@ -206,7 +206,8 @@ export default function ApiPage() {
 
   useEffect(() => { load() }, [load])
 
-  async function handleRevoke(id: string) {
+  async function handleRevoke(id: string, name: string) {
+    if (!confirm(`Revogar a chave "${name}"? Integrações que usam esta chave pararão de funcionar imediatamente.`)) return
     setRevoking(id)
     try {
       await api.post(`/admin/api-keys/${id}/revoke`)
@@ -219,7 +220,8 @@ export default function ApiPage() {
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Remover a chave "${name}"? Esta ação não pode ser desfeita.`)) return
     try {
       await api.delete(`/admin/api-keys/${id}`)
       setKeys((prev) => prev.filter((k) => k.id !== id))
@@ -326,7 +328,7 @@ export default function ApiPage() {
                         size="sm"
                         variant="outline"
                         disabled={revoking === k.id}
-                        onClick={() => handleRevoke(k.id)}
+                        onClick={() => handleRevoke(k.id, k.name)}
                         className="text-destructive border-destructive/30 hover:bg-destructive/10"
                       >
                         <ShieldOff className="mr-1.5 h-3.5 w-3.5" />
@@ -334,7 +336,7 @@ export default function ApiPage() {
                       </Button>
                     )}
                     {k.status === 'REVOKED' && (
-                      <Button size="icon" variant="ghost" onClick={() => handleDelete(k.id)} className="text-destructive">
+                      <Button size="icon" variant="ghost" onClick={() => handleDelete(k.id, k.name)} className="text-destructive">
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}

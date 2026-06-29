@@ -51,10 +51,12 @@ export class PortalService {
     const client = await this.findClientByUser(userId, orgId)
     const { status, page = 1, limit = 20 } = params
 
+    const statuses = status ? status.split(',').map((s) => s.trim()).filter(Boolean) : []
     const where = {
       organizationId: orgId,
       clientId: client.id,
-      ...(status && { status: status as any }),
+      ...(statuses.length === 1 && { status: statuses[0] as any }),
+      ...(statuses.length > 1 && { status: { in: statuses as any[] } }),
     }
 
     const [data, total] = await Promise.all([

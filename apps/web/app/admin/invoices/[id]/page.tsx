@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import {
   invoicesApi, paymentsApi, Invoice, Payment,
-  INVOICE_STATUS_LABELS, PAYMENT_METHOD_LABELS, formatCurrency,
+  INVOICE_STATUS_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS, formatCurrency,
 } from '@/lib/api/orders'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -252,7 +252,7 @@ export default function InvoiceDetailPage() {
                         <div className="flex items-center gap-2">
                           <p className="text-sm font-medium">{PAYMENT_METHOD_LABELS[pay.method]}</p>
                           <Badge variant={PAYMENT_STATUS_VARIANTS[pay.status] ?? 'outline'} className="text-xs">
-                            {pay.status}
+                            {PAYMENT_STATUS_LABELS[pay.status] ?? pay.status}
                           </Badge>
                         </div>
                         {pay.pixCode && (

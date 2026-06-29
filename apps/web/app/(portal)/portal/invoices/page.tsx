@@ -84,9 +84,10 @@ export default function PortalInvoicesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="OPEN,OVERDUE">A pagar</SelectItem>
             <SelectItem value="OPEN">Em aberto</SelectItem>
-            <SelectItem value="PAID">Pago</SelectItem>
             <SelectItem value="OVERDUE">Vencida</SelectItem>
+            <SelectItem value="PAID">Pago</SelectItem>
           </SelectContent>
         </Select>
       </div>

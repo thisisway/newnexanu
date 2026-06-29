@@ -227,7 +227,8 @@ export default function WebhooksPage() {
     }
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Remover o webhook "${name}"? Esta ação não pode ser desfeita.`)) return
     setDeleting(id)
     try {
       await api.delete(`/admin/webhooks/${id}`)
@@ -350,7 +351,7 @@ export default function WebhooksPage() {
                       variant="ghost"
                       title="Remover"
                       disabled={deleting === wh.id}
-                      onClick={() => handleDelete(wh.id)}
+                      onClick={() => handleDelete(wh.id, wh.name)}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
