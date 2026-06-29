@@ -131,6 +131,42 @@ export class StatsService {
     }
   }
 
+  async search(organizationId: string, q: string) {
+    if (!q || q.trim().length < 2) return { clients: [], invoices: [], tickets: [] }
+
+    const term = q.trim()
+    const contains = { contains: term, mode: 'insensitive' as const }
+
+    const [clients, invoices, tickets] = await Promise.all([
+      this.prisma.client.findMany({
+        where: {
+          organizationId,
+          OR: [{ name: contains }, { email: contains }, { document: contains }],
+        },
+        select: { id: true, name: true, email: true, status: true },
+        take: 5,
+      }),
+      this.prisma.invoice.findMany({
+        where: {
+          organizationId,
+          OR: [{ number: contains }, { client: { name: contains } }],
+        },
+        select: { id: true, number: true, status: true, total: true, client: { select: { name: true } } },
+        take: 5,
+      }),
+      this.prisma.ticket.findMany({
+        where: {
+          organizationId,
+          OR: [{ subject: contains }, { client: { name: contains } }],
+        },
+        select: { id: true, number: true, subject: true, status: true, client: { select: { name: true } } },
+        take: 5,
+      }),
+    ])
+
+    return { clients, invoices, tickets }
+  }
+
   private toMonthlyValue(amount: number, cycle: string): number {
     switch (cycle) {
       case 'MONTHLY': return amount

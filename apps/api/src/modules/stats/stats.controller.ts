@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common'
+import { Controller, Get, Query } from '@nestjs/common'
 import { StatsService } from './stats.service'
 import { CurrentOrg } from '../../common/decorators/current-org.decorator'
 
@@ -14,5 +14,10 @@ export class StatsController {
   @Get('reports')
   getReports(@CurrentOrg() orgId: string) {
     return this.service.getReports(orgId)
+  }
+
+  @Get('search')
+  search(@CurrentOrg() orgId: string, @Query('q') q: string) {
+    return this.service.search(orgId, q ?? '')
   }
 }

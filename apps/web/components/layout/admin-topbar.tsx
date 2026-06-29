@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Bell, Search, Sun, Moon, Menu, ShoppingCart, FileText, HeadphonesIcon } from 'lucide-react'
+import { Bell, Search, Sun, Moon, Menu, ShoppingCart, FileText, HeadphonesIcon, Users, X } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { UserAvatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { UserAvatar } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,9 +26,28 @@ interface DashboardCounts {
   openTickets: number
 }
 
+interface SearchResults {
+  clients: Array<{ id: string; name: string; email: string; status: string }>
+  invoices: Array<{ id: string; number: string; status: string; total: string; client?: { name: string } }>
+  tickets: Array<{ id: string; number: number; subject: string; status: string; client?: { name: string } }>
+}
+
 interface AdminTopbarProps {
   onMenuToggle?: () => void
   className?: string
+}
+
+const INVOICE_STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Rascunho', OPEN: 'Em aberto', PAID: 'Pago',
+  OVERDUE: 'Vencida', CANCELLED: 'Cancelada',
+}
+const TICKET_STATUS_LABELS: Record<string, string> = {
+  OPEN: 'Aberto', IN_PROGRESS: 'Em andamento', WAITING_CLIENT: 'Aguardando', RESOLVED: 'Resolvido', CLOSED: 'Fechado',
+}
+
+function formatCurrencyShort(value: string | number) {
+  const n = Number(value)
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
 }
 
 export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
@@ -37,6 +55,15 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
   const { user, logout } = useAuth()
   const router = useRouter()
   const [counts, setCounts] = useState<DashboardCounts>({ pendingOrders: 0, overdueInvoices: 0, openTickets: 0 })
+
+  // Search state
+  const [query, setQuery] = useState('')
+  const [results, setResults] = useState<SearchResults | null>(null)
+  const [searching, setSearching] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     api.get('/admin/stats/dashboard').then((r) => {
@@ -47,6 +74,60 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
       })
     }).catch(() => {})
   }, [])
+
+  const performSearch = useCallback(async (q: string) => {
+    if (q.trim().length < 2) {
+      setResults(null)
+      setSearchOpen(false)
+      return
+    }
+    setSearching(true)
+    try {
+      const res = await api.get('/admin/stats/search', { params: { q } })
+      setResults(res.data)
+      setSearchOpen(true)
+    } catch {
+      setResults(null)
+    } finally {
+      setSearching(false)
+    }
+  }, [])
+
+  function handleSearchInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
+    setQuery(val)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => performSearch(val), 300)
+  }
+
+  function clearSearch() {
+    setQuery('')
+    setResults(null)
+    setSearchOpen(false)
+    inputRef.current?.focus()
+  }
+
+  function navigate(href: string) {
+    setSearchOpen(false)
+    setQuery('')
+    setResults(null)
+    router.push(href)
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const hasResults = results && (
+    results.clients.length > 0 || results.invoices.length > 0 || results.tickets.length > 0
+  )
 
   const totalAlerts = counts.pendingOrders + counts.overdueInvoices + counts.openTickets
 
@@ -86,12 +167,126 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
       )}
 
       {/* Search */}
-      <div className="flex-1 max-w-sm">
-        <Input
-          leftIcon={<Search />}
-          placeholder="Buscar clientes, faturas…"
-          className="h-9 rounded-xl bg-accent/60 text-sm border-0 focus-visible:bg-card focus-visible:ring-1"
-        />
+      <div ref={searchRef} className="relative flex-1 max-w-sm">
+        <div className="relative flex items-center">
+          <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={handleSearchInput}
+            onFocus={() => hasResults && setSearchOpen(true)}
+            placeholder="Buscar clientes, faturas, chamados…"
+            className="h-9 w-full rounded-xl border-0 bg-accent/60 pl-9 pr-8 text-sm placeholder:text-muted-foreground focus:bg-card focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          {query && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-2.5 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Search dropdown */}
+        {searchOpen && (
+          <div className="absolute top-full mt-1 w-full min-w-[360px] rounded-2xl border border-border bg-popover shadow-lg z-50">
+            {searching ? (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">Buscando…</div>
+            ) : !hasResults ? (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                Nenhum resultado para <strong>{query}</strong>
+              </div>
+            ) : (
+              <div className="py-1">
+                {/* Clients */}
+                {results!.clients.length > 0 && (
+                  <div>
+                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Clientes
+                    </p>
+                    {results!.clients.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => navigate(`/admin/clients/${c.id}`)}
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent rounded-xl mx-px transition-colors"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                          <Users className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">{c.name}</p>
+                          <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                        </div>
+                        <Badge variant={c.status === 'ACTIVE' ? 'success' : 'outline'} className="text-[10px] shrink-0">
+                          {c.status === 'ACTIVE' ? 'Ativo' : c.status}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Invoices */}
+                {results!.invoices.length > 0 && (
+                  <div>
+                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Faturas
+                    </p>
+                    {results!.invoices.map((inv) => (
+                      <button
+                        key={inv.id}
+                        onClick={() => navigate(`/admin/invoices/${inv.id}`)}
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent rounded-xl mx-px transition-colors"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">{inv.number}</p>
+                          <p className="text-xs text-muted-foreground truncate">{inv.client?.name}</p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-medium">{formatCurrencyShort(inv.total)}</p>
+                          <p className="text-[10px] text-muted-foreground">{INVOICE_STATUS_LABELS[inv.status] ?? inv.status}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tickets */}
+                {results!.tickets.length > 0 && (
+                  <div>
+                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Chamados
+                    </p>
+                    {results!.tickets.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => navigate(`/admin/support/${t.id}`)}
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-accent rounded-xl mx-px transition-colors"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <HeadphonesIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">#{t.number} — {t.subject}</p>
+                          <p className="text-xs text-muted-foreground truncate">{t.client?.name}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {TICKET_STATUS_LABELS[t.status] ?? t.status}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="h-1" />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="ml-auto flex items-center gap-1">
