@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ClientFormDrawer } from '../components/client-form-drawer'
+import { ContactFormDrawer } from '../components/contact-form-drawer'
 
 const ORDER_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   PENDING: 'warning', ACTIVE: 'success', SUSPENDED: 'warning', CANCELLED: 'danger', FRAUD: 'danger',
@@ -55,6 +56,7 @@ export default function ClientDetailPage() {
   const [noteContent, setNoteContent] = useState('')
   const [sendingNote, setSendingNote] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
+  const [contactDrawer, setContactDrawer] = useState<{ open: boolean; contact?: ClientContact }>({ open: false })
 
   useEffect(() => {
     load()
@@ -90,6 +92,12 @@ export default function ClientDetailPage() {
 
   async function handleDeleteNote(noteId: string) {
     await clientsApi.deleteNote(id, noteId)
+    load()
+  }
+
+  async function handleDeleteContact(contactId: string) {
+    if (!confirm('Remover este contato?')) return
+    await clientsApi.deleteContact(id, contactId)
     load()
   }
 
@@ -236,7 +244,7 @@ export default function ClientDetailPage() {
           <Section
             title={`Contatos (${contacts.length})`}
             action={
-              <Button variant="ghost" size="icon-sm">
+              <Button variant="ghost" size="icon-sm" onClick={() => setContactDrawer({ open: true })}>
                 <Plus className="h-4 w-4" />
               </Button>
             }
@@ -263,6 +271,20 @@ export default function ClientDetailPage() {
                       {contact.email && (
                         <p className="text-xs text-muted-foreground truncate">{contact.email}</p>
                       )}
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        onClick={() => setContactDrawer({ open: true, contact })}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteContact(contact.id)}
+                        className="text-muted-foreground hover:text-destructive transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -388,6 +410,14 @@ export default function ClientDetailPage() {
         onClose={() => setEditOpen(false)}
         onSuccess={() => { setEditOpen(false); load() }}
         client={client}
+      />
+
+      <ContactFormDrawer
+        open={contactDrawer.open}
+        onClose={() => setContactDrawer({ open: false })}
+        onSuccess={() => { setContactDrawer({ open: false }); load() }}
+        clientId={id}
+        contact={contactDrawer.contact}
       />
     </div>
   )

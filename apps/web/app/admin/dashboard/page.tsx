@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Users, FileText, TrendingUp, AlertCircle,
-  ShoppingCart, RefreshCcw, Clock, CheckCircle,
+  ShoppingCart, RefreshCcw, Clock, CheckCircle, HeadphonesIcon,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { MetricCard } from '@/components/ui/card'
@@ -19,6 +19,7 @@ interface DashboardStats {
   activeClients: number
   openInvoices: number
   overdueInvoices: number
+  openTickets: number
   pendingOrders: number
   activeSubscriptions: number
   recentOrders: Array<{
@@ -144,7 +145,16 @@ export default function DashboardPage() {
                     severity="warning"
                   />
                 )}
-                {stats && stats.pendingOrders === 0 && stats.overdueInvoices === 0 && stats.openInvoices === 0 && (
+                {(stats?.openTickets ?? 0) > 0 && (
+                  <AttentionItem
+                    count={stats!.openTickets}
+                    label="Chamados de suporte em aberto"
+                    action="Ver suporte"
+                    href="/admin/support"
+                    severity="warning"
+                  />
+                )}
+                {stats && stats.pendingOrders === 0 && stats.overdueInvoices === 0 && stats.openInvoices === 0 && stats.openTickets === 0 && (
                   <div className="flex flex-col items-center gap-2 py-4 text-center">
                     <CheckCircle className="h-8 w-8 text-success" />
                     <p className="text-sm text-muted-foreground">Tudo em dia!</p>
