@@ -298,7 +298,7 @@ export default function ClientDetailPage() {
             <div className="flex flex-col gap-3">
               {[
                 { label: 'Pedidos', value: String(orders.length) },
-                { label: 'Faturas em aberto', value: String(invoices.filter((i) => i.status === 'OPEN').length) },
+                { label: 'Faturas em aberto', value: String(invoices.filter((i) => ['OPEN', 'OVERDUE'].includes(i.status)).length) },
                 {
                   label: 'Total pago',
                   value: formatCurrency(invoices.filter((i) => i.status === 'PAID').reduce((s, i) => s + Number(i.total), 0)),
