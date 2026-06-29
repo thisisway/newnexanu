@@ -18,6 +18,7 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
 import { StatsModule } from './modules/stats/stats.module'
 import { PortalModule } from './modules/portal/portal.module'
 import { TicketsModule } from './modules/tickets/tickets.module'
+import { MailModule } from './modules/mail/mail.module'
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { TicketsModule } from './modules/tickets/tickets.module'
     StatsModule,
     PortalModule,
     TicketsModule,
+    MailModule,
   ],
 })
 export class AppModule implements NestModule {

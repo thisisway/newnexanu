@@ -41,4 +41,9 @@ export class InvoicesController {
   cancel(@CurrentOrg() orgId: string, @Param('id') id: string) {
     return this.service.cancel(orgId, id)
   }
+
+  @Post(':id/send-email')
+  sendByEmail(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.service.sendByEmail(orgId, id)
+  }
 }

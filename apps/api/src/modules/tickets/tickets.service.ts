@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { MailService } from '../mail/mail.service'
 import { CreateTicketDto } from './dto/create-ticket.dto'
 import { UpdateTicketDto } from './dto/update-ticket.dto'
 import { Prisma } from '@prisma/client'
@@ -12,7 +13,10 @@ const TICKET_INCLUDE = {
 
 @Injectable()
 export class TicketsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   private async nextNumber(orgId: string) {
     const count = await this.prisma.ticket.count({ where: { organizationId: orgId } })
@@ -95,7 +99,12 @@ export class TicketsService {
   }
 
   async addAdminMessage(orgId: string, ticketId: string, userId: string, body: string, isInternal = false) {
-    await this.findOne(orgId, ticketId)
+    const ticket = await this.prisma.ticket.findFirst({
+      where: { id: ticketId, organizationId: orgId },
+      include: { client: { select: { name: true, email: true } } },
+    })
+    if (!ticket) throw new NotFoundException('Ticket não encontrado.')
+
     const message = await this.prisma.ticketMessage.create({
       data: { ticketId, userId, body, isInternal },
       include: { user: { select: { id: true, name: true, avatarUrl: true } } },
@@ -104,6 +113,18 @@ export class TicketsService {
       where: { id: ticketId },
       data: { status: 'IN_PROGRESS', updatedAt: new Date() },
     })
+
+    if (!isInternal && ticket.client?.email) {
+      const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000'
+      this.mail.sendTicketReply(ticket.client.email, {
+        clientName: ticket.client.name,
+        ticketNumber: ticket.number,
+        subject: ticket.subject,
+        body,
+        portalUrl: `${frontendUrl}/portal/support/${ticket.id}`,
+      }).catch(() => {})
+    }
+
     return message
   }
 
@@ -141,7 +162,7 @@ export class TicketsService {
 
   async createByClient(orgId: string, clientId: string, dto: CreateTicketDto) {
     const number = await this.nextNumber(orgId)
-    return this.prisma.ticket.create({
+    const ticket = await this.prisma.ticket.create({
       data: {
         organizationId: orgId,
         clientId,
@@ -151,7 +172,20 @@ export class TicketsService {
         category: dto.category,
         messages: { create: { clientId, body: dto.body } },
       },
+      include: { client: { select: { name: true, email: true } } },
     })
+
+    if (ticket.client?.email) {
+      const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:3000'
+      this.mail.sendTicketCreated(ticket.client.email, {
+        clientName: ticket.client.name,
+        ticketNumber: ticket.number,
+        subject: ticket.subject,
+        portalUrl: `${frontendUrl}/portal/support/${ticket.id}`,
+      }).catch(() => {})
+    }
+
+    return ticket
   }
 
   async addClientMessage(orgId: string, ticketId: string, clientId: string, body: string) {

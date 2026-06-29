@@ -10,7 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle, Building2, User, Lock } from 'lucide-react'
+import { CheckCircle, Building2, User, Lock, Mail, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/hooks/use-toast'
 
 const orgSchema = z.object({
   name: z.string().min(2, 'Nome obrigatório'),
@@ -36,8 +38,18 @@ type OrgForm = z.infer<typeof orgSchema>
 type ProfileForm = z.infer<typeof profileSchema>
 type PasswordForm = z.infer<typeof passwordSchema>
 
+interface SmtpInfo {
+  configured: boolean
+  host: string | null
+  port: number
+  user: string | null
+  fromName: string
+  fromEmail: string | null
+}
+
 export default function SettingsPage() {
   const { user } = useAuthStore()
+  const { toast } = useToast()
   const orgId = typeof window !== 'undefined' ? localStorage.getItem('nexano_org_id') : null
 
   const [orgLoading, setOrgLoading] = useState(true)
@@ -53,6 +65,10 @@ export default function SettingsPage() {
   const [pwSuccess, setPwSuccess] = useState(false)
   const [pwError, setPwError] = useState('')
 
+  const [smtpInfo, setSmtpInfo] = useState<SmtpInfo | null>(null)
+  const [testEmail, setTestEmail] = useState('')
+  const [testSending, setTestSending] = useState(false)
+
   const orgForm = useForm<OrgForm>({ resolver: zodResolver(orgSchema) })
   const profileForm = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
@@ -66,11 +82,25 @@ export default function SettingsPage() {
       const org = r.data
       orgForm.reset({ name: org.name, slug: org.slug, domain: org.domain ?? '' })
     }).finally(() => setOrgLoading(false))
+    api.get('/admin/settings/mail').then((r) => setSmtpInfo(r.data)).catch(() => {})
   }, [orgId])
 
   useEffect(() => {
     if (user) profileForm.reset({ name: user.name, email: user.email })
   }, [user])
+
+  async function onSendTestEmail() {
+    if (!testEmail) return
+    setTestSending(true)
+    try {
+      await api.post('/admin/settings/mail/test', { to: testEmail })
+      toast({ title: 'E-mail de teste enviado!', description: `Verifique a caixa de entrada de ${testEmail}` })
+    } catch (e: any) {
+      toast({ title: 'Erro ao enviar', description: e?.response?.data?.message ?? 'Verifique as configurações SMTP.', variant: 'destructive' })
+    } finally {
+      setTestSending(false)
+    }
+  }
 
   async function onOrgSubmit(data: OrgForm) {
     if (!orgId) return
@@ -200,6 +230,78 @@ export default function SettingsPage() {
               )}
             </div>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* SMTP / Email */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Mail className="h-4 w-4" /> E-mail (SMTP)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {smtpInfo === null ? (
+            <p className="text-sm text-muted-foreground">Carregando...</p>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-4">
+                {smtpInfo.configured ? (
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 shrink-0 text-warning" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">
+                    {smtpInfo.configured ? 'SMTP configurado' : 'SMTP não configurado'}
+                  </p>
+                  {smtpInfo.configured ? (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {smtpInfo.host}:{smtpInfo.port} · De: {smtpInfo.fromEmail}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Defina SMTP_HOST, SMTP_USER e SMTP_PASS nas variáveis de ambiente.
+                    </p>
+                  )}
+                </div>
+                <Badge variant={smtpInfo.configured ? 'success' : 'warning'} className="shrink-0">
+                  {smtpInfo.configured ? 'Ativo' : 'Inativo'}
+                </Badge>
+              </div>
+
+              {smtpInfo.configured && (
+                <div className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    loading={testSending}
+                    disabled={!testEmail}
+                    onClick={onSendTestEmail}
+                  >
+                    Enviar teste
+                  </Button>
+                </div>
+              )}
+
+              <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium text-foreground">Variáveis de ambiente</p>
+                <p><code className="font-mono">SMTP_HOST</code> — servidor SMTP (ex: smtp.gmail.com)</p>
+                <p><code className="font-mono">SMTP_PORT</code> — porta (587 TLS / 465 SSL)</p>
+                <p><code className="font-mono">SMTP_USER</code> — usuário/e-mail de autenticação</p>
+                <p><code className="font-mono">SMTP_PASS</code> — senha ou app password</p>
+                <p><code className="font-mono">SMTP_FROM_NAME</code> — nome do remetente (padrão: Nexano)</p>
+                <p><code className="font-mono">SMTP_FROM_EMAIL</code> — e-mail do remetente</p>
+                <p><code className="font-mono">SMTP_SECURE</code> — true para SSL (porta 465)</p>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

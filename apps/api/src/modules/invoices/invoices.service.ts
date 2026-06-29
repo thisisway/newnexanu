@@ -1,10 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { PrismaService } from '../prisma/prisma.service'
+import { MailService } from '../mail/mail.service'
 import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+    private config: ConfigService,
+  ) {}
 
   async findAll(
     organizationId: string,
@@ -60,6 +66,28 @@ export class InvoicesService {
       where: { id },
       data: { status: 'PAID', paidAt: new Date() },
     })
+  }
+
+  async sendByEmail(organizationId: string, id: string) {
+    const invoice = await this.findOne(organizationId, id)
+    if (!invoice.client?.email) throw new BadRequestException('Cliente não possui e-mail cadastrado.')
+
+    const frontendUrl = this.config.get('frontendUrl') ?? 'http://localhost:3000'
+    const dueDate = invoice.dueDate
+      ? new Date(invoice.dueDate).toLocaleDateString('pt-BR')
+      : '—'
+    const total = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+      .format(Number(invoice.total))
+
+    await this.mail.sendInvoiceEmail(invoice.client.email, {
+      clientName: invoice.client.name,
+      invoiceNumber: invoice.number,
+      total,
+      dueDate,
+      portalUrl: `${frontendUrl}/portal/invoices`,
+    })
+
+    return { message: `Fatura enviada para ${invoice.client.email}` }
   }
 
   async cancel(organizationId: string, id: string) {

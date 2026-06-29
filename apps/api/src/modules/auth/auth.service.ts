@@ -10,6 +10,7 @@ import * as bcrypt from 'bcryptjs'
 import * as speakeasy from 'speakeasy'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../audit/audit.service'
+import { MailService } from '../mail/mail.service'
 import { LoginDto } from './dto/login.dto'
 import { RegisterDto } from './dto/register.dto'
 import { JwtPayload } from '../../common/decorators/current-user.decorator'
@@ -21,6 +22,7 @@ export class AuthService {
     private jwtService: JwtService,
     private config: ConfigService,
     private audit: AuditService,
+    private mail: MailService,
   ) {}
 
   async register(dto: RegisterDto, ip?: string, userAgent?: string) {
@@ -245,8 +247,8 @@ export class AuthService {
       },
     )
 
-    // In production this would be sent via email; log for development
     const resetUrl = `${this.config.get('frontendUrl') ?? 'http://localhost:3000'}/reset-password?token=${token}`
+    await this.mail.sendPasswordReset(user.email, resetUrl)
     console.log(`[Password Reset] ${user.email} → ${resetUrl}`)
   }
 

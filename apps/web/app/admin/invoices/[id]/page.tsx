@@ -4,12 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   ArrowLeft, CheckCircle, XCircle, CreditCard, User,
-  Calendar, Package, Receipt,
+  Calendar, Package, Receipt, Mail,
 } from 'lucide-react'
 import {
   invoicesApi, paymentsApi, Invoice, Payment,
   INVOICE_STATUS_LABELS, PAYMENT_METHOD_LABELS, formatCurrency,
 } from '@/lib/api/orders'
+import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,6 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { useToast } from '@/hooks/use-toast'
 
 const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   DRAFT: 'outline',
@@ -40,12 +42,14 @@ const PAYMENT_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' 
 export default function InvoiceDetailPage() {
   const router = useRouter()
   const { id } = useParams<{ id: string }>()
+  const { toast } = useToast()
   const [invoice, setInvoice] = useState<Invoice | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
   const [payMethod, setPayMethod] = useState<Payment['method']>('PIX')
   const [generating, setGenerating] = useState(false)
   const [acting, setActing] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
 
   async function refresh() {
     const [inv, pays] = await Promise.all([
@@ -90,6 +94,19 @@ export default function InvoiceDetailPage() {
     await refresh()
   }
 
+  async function handleSendEmail() {
+    if (!invoice) return
+    setSendingEmail(true)
+    try {
+      await api.post(`/admin/invoices/${invoice.id}/send-email`)
+      toast({ title: 'E-mail enviado!', description: `Fatura enviada para ${(invoice as any).client?.email}` })
+    } catch (e: any) {
+      toast({ title: 'Erro ao enviar', description: e?.response?.data?.message ?? 'Verifique as configurações SMTP.', variant: 'destructive' })
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -131,16 +148,21 @@ export default function InvoiceDetailPage() {
             </p>
           </div>
         </div>
-        {canAct && (
-          <div className="flex gap-2">
-            <Button onClick={handleMarkPaid} disabled={acting}>
-              <CheckCircle className="mr-2 h-4 w-4" /> Marcar pago
-            </Button>
-            <Button variant="outline" onClick={handleCancel} disabled={acting}>
-              <XCircle className="mr-2 h-4 w-4" /> Cancelar
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={handleSendEmail} loading={sendingEmail}>
+            <Mail className="mr-2 h-4 w-4" /> Enviar por e-mail
+          </Button>
+          {canAct && (
+            <>
+              <Button size="sm" onClick={handleMarkPaid} disabled={acting}>
+                <CheckCircle className="mr-2 h-4 w-4" /> Marcar pago
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleCancel} disabled={acting}>
+                <XCircle className="mr-2 h-4 w-4" /> Cancelar
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
