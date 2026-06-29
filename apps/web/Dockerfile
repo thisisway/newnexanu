@@ -13,7 +13,7 @@ RUN pnpm install --frozen-lockfile
 # Copy source
 COPY apps/web ./apps/web
 
-# Build args for baked-in public vars
+# Build args for baked-in public vars (pass via --build-arg or EasyPanel build args)
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
