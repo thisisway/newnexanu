@@ -6,8 +6,8 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  outputFileTracingRoot: path.join(__dirname, '../../'),
   experimental: {
+    outputFileTracingRoot: path.join(__dirname, '../../'),
     serverActions: {
       allowedOrigins: process.env.ALLOWED_ORIGINS
         ? process.env.ALLOWED_ORIGINS.split(',')
