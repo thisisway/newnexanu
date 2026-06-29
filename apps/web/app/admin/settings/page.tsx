@@ -215,10 +215,11 @@ export default function SettingsPage() {
             />
             <Input
               label="E-mail"
-              required
               type="email"
+              disabled
+              className="opacity-60 cursor-not-allowed"
+              hint="O e-mail não pode ser alterado diretamente."
               {...profileForm.register('email')}
-              error={profileForm.formState.errors.email?.message}
             />
             {profileError && <p className="text-sm text-destructive">{profileError}</p>}
             <div className="flex items-center gap-3">

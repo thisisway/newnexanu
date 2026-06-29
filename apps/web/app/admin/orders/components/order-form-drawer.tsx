@@ -74,8 +74,13 @@ export function OrderFormDrawer({ open, onClose, onSuccess, preselectedClientId 
       clientsApi.list({ limit: 100 }),
       productsApi.listPlans(),
     ]).then(([cls, pls]) => {
-      setClients(cls.data ?? cls)
+      const clientList: Client[] = cls.data ?? cls
+      setClients(clientList)
       setPlans(pls.data ?? pls)
+      if (preselectedClientId) {
+        const preselected = clientList.find((c) => c.id === preselectedClientId)
+        if (preselected) setClientSearch(preselected.name)
+      }
     })
   }, [open, preselectedClientId, reset])
 
