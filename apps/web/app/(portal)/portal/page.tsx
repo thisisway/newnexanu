@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatCurrency, INVOICE_STATUS_LABELS } from '@/lib/api/orders'
+import { formatCurrency } from '@/lib/api/orders'
 import {
   Server, FileText, HeadphonesIcon, ArrowRight,
   CheckCircle2, AlertCircle, RefreshCcw, MessageSquare,
@@ -43,11 +43,6 @@ const CYCLE_PT: Record<string, string> = {
   ANNUAL: 'Anual', BIANNUAL: 'Bianual', ONE_TIME: 'Único',
 }
 
-const INV_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
-  DRAFT: 'outline', OPEN: 'warning', PAID: 'success', OVERDUE: 'danger',
-  CANCELLED: 'outline', REFUNDED: 'outline',
-}
-
 export default function PortalHomePage() {
   const router = useRouter()
   const { user } = useAuthStore()
@@ -57,6 +52,7 @@ export default function PortalHomePage() {
   const [orders, setOrders] = useState<PortalOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [noProfile, setNoProfile] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -67,6 +63,7 @@ export default function PortalHomePage() {
       setOrders(ord.data?.data ?? ord.data ?? [])
     }).catch((e) => {
       if (e?.response?.status === 404) setNoProfile(true)
+      else setFetchError(true)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -77,6 +74,11 @@ export default function PortalHomePage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-24 w-full rounded-xl" />
+        <div className="grid grid-cols-3 gap-4">
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+          <Skeleton className="h-20 rounded-xl" />
+        </div>
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="space-y-3 lg:col-span-2">
             <Skeleton className="h-24 w-full rounded-xl" />
@@ -103,8 +105,24 @@ export default function PortalHomePage() {
     )
   }
 
-  const openInvoices = data?.recentInvoices.filter((i) => ['OPEN', 'OVERDUE'].includes(i.status)) ?? []
+  if (fetchError) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-3 text-center">
+        <AlertCircle className="h-10 w-10 text-muted-foreground/40" />
+        <p className="font-medium text-foreground">Não foi possível carregar o painel</p>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Ocorreu um erro ao buscar seus dados. Tente recarregar a página.
+        </p>
+        <Button variant="outline" onClick={() => window.location.reload()}>
+          <RefreshCcw className="mr-2 h-4 w-4" /> Recarregar
+        </Button>
+      </div>
+    )
+  }
+
+  const pendingInvoices = data?.recentInvoices.filter((i) => ['OPEN', 'OVERDUE'].includes(i.status)) ?? []
   const allOk = (data?.openInvoices ?? 0) === 0 && (data?.openTickets ?? 0) === 0
+  const activeOrders = orders.filter((o) => o.status === 'ACTIVE')
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -131,20 +149,80 @@ export default function PortalHomePage() {
         </div>
       </div>
 
+      {/* Stat cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Serviços ativos</p>
+              <Server className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="mt-2 text-2xl font-bold">{data?.activeOrders ?? 0}</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {(data?.activeOrders ?? 0) === 1 ? 'serviço contratado' : 'serviços contratados'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className={(data?.openInvoices ?? 0) > 0 ? 'border-warning/40' : ''}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Faturas em aberto</p>
+              <FileText className={`h-4 w-4 ${(data?.openInvoices ?? 0) > 0 ? 'text-warning' : 'text-muted-foreground'}`} />
+            </div>
+            <p className={`mt-2 text-2xl font-bold ${(data?.openInvoices ?? 0) > 0 ? 'text-warning' : ''}`}>
+              {data?.openInvoices ?? 0}
+            </p>
+            <button
+              onClick={() => router.push('/portal/invoices')}
+              className="mt-0.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+            >
+              {(data?.openInvoices ?? 0) > 0 ? 'Ver faturas →' : 'Ver histórico →'}
+            </button>
+          </CardContent>
+        </Card>
+
+        <Card className={(data?.openTickets ?? 0) > 0 ? 'border-primary/30' : ''}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">Chamados abertos</p>
+              <HeadphonesIcon className={`h-4 w-4 ${(data?.openTickets ?? 0) > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+            </div>
+            <p className={`mt-2 text-2xl font-bold ${(data?.openTickets ?? 0) > 0 ? 'text-primary' : ''}`}>
+              {data?.openTickets ?? 0}
+            </p>
+            <button
+              onClick={() => router.push('/portal/support')}
+              className="mt-0.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+            >
+              {(data?.openTickets ?? 0) > 0 ? 'Ver chamados →' : 'Abrir chamado →'}
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Orders / Services */}
+        {/* Services */}
         <div className="space-y-3 lg:col-span-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">Meus serviços</h2>
+            {activeOrders.length > 0 && (
+              <button
+                onClick={() => router.push('/portal/services')}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+              >
+                Ver todos <ArrowRight className="h-3 w-3" />
+              </button>
+            )}
           </div>
 
-          {orders.length === 0 ? (
+          {activeOrders.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-xl border border-border py-10 text-center">
               <Server className="h-8 w-8 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">Nenhum serviço ativo.</p>
             </div>
           ) : (
-            orders.filter((o) => o.status === 'ACTIVE').map((order) => (
+            activeOrders.map((order) => (
               <Card key={order.id} className="card-hover">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -201,25 +279,30 @@ export default function PortalHomePage() {
               </button>
             </div>
 
-            {openInvoices.length > 0 ? (
-              openInvoices.map((invoice) => (
-                <Card key={invoice.id} className="mb-2 border-warning/30 bg-warning/5">
+            {pendingInvoices.length > 0 ? (
+              pendingInvoices.map((invoice) => (
+                <Card key={invoice.id} className={`mb-2 ${invoice.status === 'OVERDUE' ? 'border-danger/30 bg-danger/5' : 'border-warning/30 bg-warning/5'}`}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="text-xs font-medium">{invoice.number}</p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          Vence {new Date(invoice.dueDate).toLocaleDateString('pt-BR')}
+                          {invoice.status === 'OVERDUE'
+                            ? `Venceu ${new Date(invoice.dueDate).toLocaleDateString('pt-BR')}`
+                            : `Vence ${new Date(invoice.dueDate).toLocaleDateString('pt-BR')}`}
                         </p>
                       </div>
-                      <p className="text-sm font-bold text-warning">{formatCurrency(invoice.total)}</p>
+                      <p className={`text-sm font-bold ${invoice.status === 'OVERDUE' ? 'text-danger' : 'text-warning'}`}>
+                        {formatCurrency(invoice.total)}
+                      </p>
                     </div>
                     <Button
                       className="mt-3 w-full"
                       size="sm"
-                      onClick={() => router.push(`/portal/invoices`)}
+                      variant={invoice.status === 'OVERDUE' ? 'destructive' : 'default'}
+                      onClick={() => router.push('/portal/invoices')}
                     >
-                      Pagar agora
+                      {invoice.status === 'OVERDUE' ? 'Regularizar agora' : 'Pagar agora'}
                     </Button>
                   </CardContent>
                 </Card>
