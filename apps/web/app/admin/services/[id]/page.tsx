@@ -7,7 +7,7 @@ import {
   Pause, Play, XCircle, RefreshCw, Save,
 } from 'lucide-react'
 import { api } from '@/lib/api'
-import { CYCLE_LABELS, formatCurrency } from '@/lib/api/orders'
+import { CYCLE_LABELS, INVOICE_STATUS_LABELS, SUBSCRIPTION_STATUS_LABELS, formatCurrency } from '@/lib/api/orders'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -218,7 +218,7 @@ export default function ServiceDetailPage() {
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <Badge variant={INV_VARIANTS[inv.status] ?? 'outline'} className="text-xs">
-                          {inv.status}
+                          {(INVOICE_STATUS_LABELS as Record<string, string>)[inv.status] ?? inv.status}
                         </Badge>
                         <p className="text-sm font-semibold">{formatCurrency(inv.total)}</p>
                       </div>
@@ -267,7 +267,7 @@ export default function ServiceDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <InfoRow label="Status" value={svc.subscription.status ?? '—'} />
+                <InfoRow label="Status" value={(SUBSCRIPTION_STATUS_LABELS as Record<string, string>)[svc.subscription.status ?? ''] ?? svc.subscription.status ?? '—'} />
                 {svc.subscription.nextBillingDate && (
                   <InfoRow
                     label="Próx. cobrança"
