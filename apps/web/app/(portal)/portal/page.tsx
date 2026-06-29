@@ -11,12 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, INVOICE_STATUS_LABELS } from '@/lib/api/orders'
 import {
   Server, FileText, HeadphonesIcon, ArrowRight,
-  CheckCircle2, AlertCircle, RefreshCcw,
+  CheckCircle2, AlertCircle, RefreshCcw, MessageSquare,
 } from 'lucide-react'
 
 interface PortalDashboard {
   client: { id: string; name: string; email: string }
   openInvoices: number
+  openTickets: number
   activeOrders: number
   recentInvoices: Array<{
     id: string
@@ -103,7 +104,7 @@ export default function PortalHomePage() {
   }
 
   const openInvoices = data?.recentInvoices.filter((i) => ['OPEN', 'OVERDUE'].includes(i.status)) ?? []
-  const allOk = (data?.openInvoices ?? 0) === 0
+  const allOk = (data?.openInvoices ?? 0) === 0 && (data?.openTickets ?? 0) === 0
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -117,7 +118,9 @@ export default function PortalHomePage() {
             <p className="mt-1 text-sm text-muted-foreground">
               {allOk
                 ? 'Sua conta está em dia. Todos os seus serviços estão ativos.'
-                : `Você tem ${data?.openInvoices} fatura${data!.openInvoices !== 1 ? 's' : ''} em aberto.`}
+                : (data?.openInvoices ?? 0) > 0
+                  ? `Você tem ${data!.openInvoices} fatura${data!.openInvoices !== 1 ? 's' : ''} em aberto.`
+                  : `Você tem ${data!.openTickets} chamado${data!.openTickets !== 1 ? 's' : ''} de suporte em andamento.`}
             </p>
           </div>
           <div className={`flex h-10 w-10 items-center justify-center rounded-full ${allOk ? 'bg-success/10' : 'bg-warning/10'}`}>
@@ -239,6 +242,7 @@ export default function PortalHomePage() {
               </p>
               {[
                 { label: 'Abrir chamado de suporte', href: '/portal/support/new', icon: HeadphonesIcon },
+                { label: 'Meus chamados', href: '/portal/support', icon: MessageSquare },
                 { label: 'Ver todas as faturas', href: '/portal/invoices', icon: FileText },
               ].map((link) => (
                 <button
