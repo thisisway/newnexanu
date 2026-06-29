@@ -90,4 +90,9 @@ export class PortalController {
     const client = await this.service.getProfile(user.sub, orgId)
     return this.ticketsService.closeByClient(orgId, id, client.id)
   }
+
+  @Get('domains')
+  getDomains(@CurrentUser() user: JwtPayload, @CurrentOrg() orgId: string) {
+    return this.service.getDomains(user.sub, orgId)
+  }
 }

@@ -87,4 +87,15 @@ export class PortalService {
       },
     })
   }
+
+  async getDomains(userId: string, orgId: string) {
+    const client = await this.findClientByUser(userId, orgId)
+
+    const domains = await this.prisma.domain.findMany({
+      where: { organizationId: orgId, clientId: client.id },
+      orderBy: [{ expiresAt: 'asc' }, { name: 'asc' }],
+    })
+
+    return { data: domains, total: domains.length }
+  }
 }
