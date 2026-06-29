@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
 
 @Injectable()
@@ -86,6 +86,17 @@ export class PortalService {
         _count: { select: { invoices: true } },
       },
     })
+  }
+
+  async assertInvoiceOwner(userId: string, orgId: string, invoiceId: string) {
+    const client = await this.findClientByUser(userId, orgId)
+    const invoice = await this.prisma.invoice.findFirst({
+      where: { id: invoiceId, organizationId: orgId },
+      select: { clientId: true },
+    })
+    if (!invoice) throw new NotFoundException('Fatura não encontrada.')
+    if (invoice.clientId !== client.id) throw new ForbiddenException('Acesso negado.')
+    return client
   }
 
   async getDomains(userId: string, orgId: string) {

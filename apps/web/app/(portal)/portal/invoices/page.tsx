@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '@/lib/api'
-import { paymentsApi } from '@/lib/api/orders'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -53,10 +52,11 @@ export default function PortalInvoicesPage() {
   async function handleGeneratePix(invoiceId: string) {
     setGenerating(invoiceId)
     try {
-      await paymentsApi.create({ invoiceId, method: 'PIX' })
+      await api.post('/portal/payments', { invoiceId, method: 'PIX' })
       await fetch()
     } finally {
-      setGenerating(null) }
+      setGenerating(null)
+    }
   }
 
   return (

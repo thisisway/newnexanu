@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Param, Body, Query } from '@nestjs/common'
 import { PortalService } from './portal.service'
 import { TicketsService } from '../tickets/tickets.service'
+import { PaymentsService } from '../payments/payments.service'
 import { CreateTicketDto } from '../tickets/dto/create-ticket.dto'
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator'
 import { CurrentOrg } from '../../common/decorators/current-org.decorator'
@@ -10,6 +11,7 @@ export class PortalController {
   constructor(
     private readonly service: PortalService,
     private readonly ticketsService: TicketsService,
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   @Get('me')
@@ -94,5 +96,18 @@ export class PortalController {
   @Get('domains')
   getDomains(@CurrentUser() user: JwtPayload, @CurrentOrg() orgId: string) {
     return this.service.getDomains(user.sub, orgId)
+  }
+
+  // ── Payments ─────────────────────────────────────────────────────────────
+
+  @Post('payments')
+  async createPayment(
+    @CurrentUser() user: JwtPayload,
+    @CurrentOrg() orgId: string,
+    @Body('invoiceId') invoiceId: string,
+    @Body('method') method: string,
+  ) {
+    await this.service.assertInvoiceOwner(user.sub, orgId, invoiceId)
+    return this.paymentsService.create(orgId, { invoiceId, method: method as any })
   }
 }
