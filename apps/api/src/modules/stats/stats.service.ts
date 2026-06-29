@@ -8,6 +8,12 @@ export class StatsService {
   async getDashboard(organizationId: string) {
     const now = new Date()
 
+    // Promote past-due OPEN invoices to OVERDUE so the count and the filter link stay in sync
+    await this.prisma.invoice.updateMany({
+      where: { organizationId, status: 'OPEN', dueDate: { lt: now } },
+      data: { status: 'OVERDUE' },
+    })
+
     const [
       activeClients,
       openInvoices,
@@ -20,9 +26,7 @@ export class StatsService {
     ] = await Promise.all([
       this.prisma.client.count({ where: { organizationId, status: 'ACTIVE' } }),
       this.prisma.invoice.count({ where: { organizationId, status: 'OPEN' } }),
-      this.prisma.invoice.count({
-        where: { organizationId, status: 'OPEN', dueDate: { lt: now } },
-      }),
+      this.prisma.invoice.count({ where: { organizationId, status: 'OVERDUE' } }),
       this.prisma.order.count({ where: { organizationId, status: 'PENDING' } }),
       this.prisma.subscription.count({ where: { organizationId, status: 'ACTIVE' } }),
       this.prisma.ticket.count({ where: { organizationId, status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
