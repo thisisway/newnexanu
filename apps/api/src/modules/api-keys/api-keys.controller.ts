@@ -1,37 +1,42 @@
-import { Controller, Get, Post, Delete, Param, Body, UseGuards, Req } from '@nestjs/common'
+import { Controller, Get, Post, Delete, Param, Body } from '@nestjs/common'
 import { ApiKeysService } from './api-keys.service'
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
+import { CurrentOrg } from '../../common/decorators/current-org.decorator'
+import { RequirePermissions } from '../../common/decorators/permissions.decorator'
 
 @Controller('admin/api-keys')
-@UseGuards(JwtAuthGuard)
 export class ApiKeysController {
   constructor(private readonly apiKeysService: ApiKeysService) {}
 
   @Get()
-  findAll(@Req() req: { user: { organizationId: string } }) {
-    return this.apiKeysService.findAll(req.user.organizationId)
+  @RequirePermissions('settings:read')
+  findAll(@CurrentOrg() orgId: string) {
+    return this.apiKeysService.findAll(orgId)
   }
 
   @Get('scopes')
+  @RequirePermissions('settings:read')
   getScopes() {
     return this.apiKeysService.getScopes()
   }
 
   @Post()
+  @RequirePermissions('settings:manage')
   create(
-    @Req() req: { user: { organizationId: string } },
+    @CurrentOrg() orgId: string,
     @Body() body: { name: string; scopes: string[]; expiresAt?: string },
   ) {
-    return this.apiKeysService.create(req.user.organizationId, body)
+    return this.apiKeysService.create(orgId, body)
   }
 
   @Post(':id/revoke')
-  revoke(@Req() req: { user: { organizationId: string } }, @Param('id') id: string) {
-    return this.apiKeysService.revoke(req.user.organizationId, id)
+  @RequirePermissions('settings:manage')
+  revoke(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.apiKeysService.revoke(orgId, id)
   }
 
   @Delete(':id')
-  remove(@Req() req: { user: { organizationId: string } }, @Param('id') id: string) {
-    return this.apiKeysService.remove(req.user.organizationId, id)
+  @RequirePermissions('settings:manage')
+  remove(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.apiKeysService.remove(orgId, id)
   }
 }

@@ -109,10 +109,8 @@ export default function PortalSettingsPage() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" {...profileForm.register('email')} />
-              {profileForm.formState.errors.email && (
-                <p className="text-xs text-destructive">{profileForm.formState.errors.email.message}</p>
-              )}
+              <Input id="email" type="email" {...profileForm.register('email')} disabled className="opacity-60 cursor-not-allowed" />
+              <p className="text-xs text-muted-foreground">O e-mail não pode ser alterado diretamente.</p>
             </div>
             {profileError && <p className="text-sm text-destructive">{profileError}</p>}
             <div className="flex justify-end">

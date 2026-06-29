@@ -1,24 +1,25 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Req } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common'
 import { DomainsService } from './domains.service'
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
+import { CurrentOrg } from '../../common/decorators/current-org.decorator'
+import { RequirePermissions } from '../../common/decorators/permissions.decorator'
 
 type DomainStatus = 'ACTIVE' | 'EXPIRED' | 'EXPIRING_SOON' | 'PENDING_TRANSFER' | 'SUSPENDED'
 
 @Controller('admin/domains')
-@UseGuards(JwtAuthGuard)
 export class DomainsController {
   constructor(private readonly domainsService: DomainsService) {}
 
   @Get()
+  @RequirePermissions('domains:read')
   findAll(
-    @Req() req: { user: { organizationId: string } },
+    @CurrentOrg() orgId: string,
     @Query('search') search?: string,
     @Query('status') status?: DomainStatus,
     @Query('clientId') clientId?: string,
     @Query('page') page?: string,
     @Query('perPage') perPage?: string,
   ) {
-    return this.domainsService.findAll(req.user.organizationId, {
+    return this.domainsService.findAll(orgId, {
       search,
       status,
       clientId,
@@ -28,18 +29,21 @@ export class DomainsController {
   }
 
   @Get('stats')
-  getStats(@Req() req: { user: { organizationId: string } }) {
-    return this.domainsService.getStats(req.user.organizationId)
+  @RequirePermissions('domains:read')
+  getStats(@CurrentOrg() orgId: string) {
+    return this.domainsService.getStats(orgId)
   }
 
   @Get(':id')
-  findOne(@Req() req: { user: { organizationId: string } }, @Param('id') id: string) {
-    return this.domainsService.findOne(req.user.organizationId, id)
+  @RequirePermissions('domains:read')
+  findOne(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.domainsService.findOne(orgId, id)
   }
 
   @Post()
+  @RequirePermissions('domains:manage')
   create(
-    @Req() req: { user: { organizationId: string } },
+    @CurrentOrg() orgId: string,
     @Body() body: {
       name: string
       clientId?: string
@@ -49,12 +53,13 @@ export class DomainsController {
       notes?: string
     },
   ) {
-    return this.domainsService.create(req.user.organizationId, body)
+    return this.domainsService.create(orgId, body)
   }
 
   @Put(':id')
+  @RequirePermissions('domains:manage')
   update(
-    @Req() req: { user: { organizationId: string } },
+    @CurrentOrg() orgId: string,
     @Param('id') id: string,
     @Body() body: {
       clientId?: string | null
@@ -65,11 +70,12 @@ export class DomainsController {
       notes?: string
     },
   ) {
-    return this.domainsService.update(req.user.organizationId, id, body)
+    return this.domainsService.update(orgId, id, body)
   }
 
   @Delete(':id')
-  remove(@Req() req: { user: { organizationId: string } }, @Param('id') id: string) {
-    return this.domainsService.remove(req.user.organizationId, id)
+  @RequirePermissions('domains:manage')
+  remove(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.domainsService.remove(orgId, id)
   }
 }

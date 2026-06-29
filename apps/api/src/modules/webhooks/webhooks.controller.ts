@@ -1,46 +1,52 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Req } from '@nestjs/common'
+import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common'
 import { WebhooksService } from './webhooks.service'
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
+import { CurrentOrg } from '../../common/decorators/current-org.decorator'
+import { RequirePermissions } from '../../common/decorators/permissions.decorator'
 
 @Controller('admin/webhooks')
-@UseGuards(JwtAuthGuard)
 export class WebhooksController {
   constructor(private readonly webhooksService: WebhooksService) {}
 
   @Get()
-  findAll(@Req() req: { user: { organizationId: string } }) {
-    return this.webhooksService.findAll(req.user.organizationId)
+  @RequirePermissions('settings:read')
+  findAll(@CurrentOrg() orgId: string) {
+    return this.webhooksService.findAll(orgId)
   }
 
   @Get(':id')
-  findOne(@Req() req: { user: { organizationId: string } }, @Param('id') id: string) {
-    return this.webhooksService.findOne(req.user.organizationId, id)
+  @RequirePermissions('settings:read')
+  findOne(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.webhooksService.findOne(orgId, id)
   }
 
   @Post()
+  @RequirePermissions('settings:manage')
   create(
-    @Req() req: { user: { organizationId: string } },
+    @CurrentOrg() orgId: string,
     @Body() body: { name: string; url: string; secret?: string; events: string[] },
   ) {
-    return this.webhooksService.create(req.user.organizationId, body)
+    return this.webhooksService.create(orgId, body)
   }
 
   @Put(':id')
+  @RequirePermissions('settings:manage')
   update(
-    @Req() req: { user: { organizationId: string } },
+    @CurrentOrg() orgId: string,
     @Param('id') id: string,
     @Body() body: { name?: string; url?: string; secret?: string; events?: string[]; status?: 'ACTIVE' | 'INACTIVE' },
   ) {
-    return this.webhooksService.update(req.user.organizationId, id, body)
+    return this.webhooksService.update(orgId, id, body)
   }
 
   @Delete(':id')
-  remove(@Req() req: { user: { organizationId: string } }, @Param('id') id: string) {
-    return this.webhooksService.remove(req.user.organizationId, id)
+  @RequirePermissions('settings:manage')
+  remove(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.webhooksService.remove(orgId, id)
   }
 
   @Post(':id/test')
-  test(@Req() req: { user: { organizationId: string } }, @Param('id') id: string) {
-    return this.webhooksService.test(req.user.organizationId, id)
+  @RequirePermissions('settings:manage')
+  test(@CurrentOrg() orgId: string, @Param('id') id: string) {
+    return this.webhooksService.test(orgId, id)
   }
 }
