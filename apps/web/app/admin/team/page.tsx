@@ -55,6 +55,7 @@ export default function TeamPage() {
   const [removingId, setRemovingId] = useState<string | null>(null)
 
   const form = useForm<InviteForm>({ resolver: zodResolver(inviteSchema) })
+  const roleIdValue = form.watch('roleId')
 
   async function load() {
     setLoading(true)
@@ -129,7 +130,7 @@ export default function TeamPage() {
                 <label className="text-sm font-medium text-foreground">
                   Papel <span className="text-destructive">*</span>
                 </label>
-                <Select onValueChange={(v) => form.setValue('roleId', v)}>
+                <Select value={roleIdValue || ''} onValueChange={(v) => form.setValue('roleId', v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar papel" />
                   </SelectTrigger>
