@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   FileText, RefreshCw, Eye, CheckCircle, XCircle,
   Clock, AlertTriangle, TrendingUp, MoreHorizontal,
@@ -32,10 +32,11 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
 
 export default function InvoicesPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
   const [loading, setLoading] = useState(true)
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState(searchParams.get('status') ?? '')
   const [page, setPage] = useState(1)
 
   const fetchInvoices = useCallback(async () => {
