@@ -31,7 +31,7 @@ export default function RootPage() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100vh',
-      background: 'var(--background, #0d0d10)',
+      background: '#f7f7f8',
     }}>
       <div style={{
         width: '32px',
