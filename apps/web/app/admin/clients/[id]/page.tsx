@@ -6,6 +6,7 @@ import {
   ArrowLeft, Building2, User, FileText,
   Plus, Trash2, Lock, Send,
   Pencil, ShoppingCart, ExternalLink, HeadphonesIcon,
+  Globe, Copy, Check,
 } from 'lucide-react'
 import { clientsApi, Client, ClientNote, ClientContact } from '@/lib/api/clients'
 import { ordersApi, invoicesApi, Order, Invoice, ORDER_STATUS_LABELS, INVOICE_STATUS_LABELS, formatCurrency, CYCLE_LABELS } from '@/lib/api/orders'
@@ -15,6 +16,9 @@ import { Badge, StatusBadge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog'
 import { ClientFormDrawer } from '../components/client-form-drawer'
 import { ContactFormDrawer } from '../components/contact-form-drawer'
 import { TicketFormDrawer } from '../../support/components/ticket-form-drawer'
@@ -61,6 +65,9 @@ export default function ClientDetailPage() {
   const [editOpen, setEditOpen] = useState(false)
   const [contactDrawer, setContactDrawer] = useState<{ open: boolean; contact?: ClientContact }>({ open: false })
   const [ticketDrawerOpen, setTicketDrawerOpen] = useState(false)
+  const [enablingPortal, setEnablingPortal] = useState(false)
+  const [portalModal, setPortalModal] = useState<{ email: string; isNew: boolean; password?: string } | null>(null)
+  const [copiedPw, setCopiedPw] = useState(false)
 
   useEffect(() => {
     load()
@@ -108,6 +115,24 @@ export default function ClientDetailPage() {
     load()
   }
 
+  async function handleEnablePortal() {
+    setEnablingPortal(true)
+    try {
+      const res = await clientsApi.enablePortalAccess(id)
+      setPortalModal({ email: res.email, isNew: res.isNew, password: res.temporaryPassword })
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? 'Erro ao habilitar acesso ao portal.')
+    } finally {
+      setEnablingPortal(false)
+    }
+  }
+
+  function handleCopyPassword(pw: string) {
+    navigator.clipboard.writeText(pw)
+    setCopiedPw(true)
+    setTimeout(() => setCopiedPw(false), 2000)
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col gap-6">
@@ -151,6 +176,10 @@ export default function ClientDetailPage() {
             <p className="text-sm text-muted-foreground">{client.email}</p>
           </div>
         </div>
+        <Button variant="outline" size="sm" onClick={handleEnablePortal} loading={enablingPortal}>
+          <Globe className="mr-2 h-4 w-4" />
+          Acesso ao portal
+        </Button>
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <Pencil className="mr-2 h-4 w-4" />
           Editar
@@ -489,6 +518,50 @@ export default function ClientDetailPage() {
         onSuccess={() => { setTicketDrawerOpen(false); load() }}
         preselectedClientId={id}
       />
+
+      <Dialog open={!!portalModal} onOpenChange={(o) => !o && setPortalModal(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              {portalModal?.isNew ? 'Acesso ao portal criado' : 'Acesso ao portal ativo'}
+            </DialogTitle>
+            <DialogDescription>
+              {portalModal?.isNew
+                ? 'Uma conta foi criada para o cliente. Compartilhe as credenciais abaixo.'
+                : 'O cliente já possui uma conta e pode acessar o portal com seu e-mail e senha.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">E-mail</p>
+                <p className="text-sm font-medium text-foreground">{portalModal?.email}</p>
+              </div>
+              {portalModal?.password && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Senha temporária</p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 rounded bg-background border border-border px-3 py-1.5 text-sm font-mono select-all">
+                      {portalModal.password}
+                    </code>
+                    <button
+                      onClick={() => handleCopyPassword(portalModal!.password!)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {copiedPw ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1.5">
+                    O cliente deve alterar a senha no primeiro acesso.
+                  </p>
+                </div>
+              )}
+            </div>
+            <Button className="w-full" onClick={() => setPortalModal(null)}>Fechar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

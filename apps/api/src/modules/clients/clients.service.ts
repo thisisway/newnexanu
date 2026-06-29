@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
+import * as bcrypt from 'bcryptjs'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../audit/audit.service'
 import { CreateClientDto } from './dto/create-client.dto'
@@ -192,5 +193,59 @@ export class ClientsService {
   async removeNote(organizationId: string, clientId: string, noteId: string) {
     await this.findOne(organizationId, clientId)
     await this.prisma.clientNote.delete({ where: { id: noteId } })
+  }
+
+  // ─── Portal Access ──────────────────────────────────────────────────────────
+
+  async enablePortalAccess(organizationId: string, clientId: string, requestUserId: string) {
+    const client = await this.findOne(organizationId, clientId)
+
+    const clientRole = await this.prisma.role.findFirst({
+      where: { slug: 'client', isSystem: true, organizationId: null },
+    })
+    if (!clientRole) throw new NotFoundException('Papel de cliente não configurado no sistema.')
+
+    let user = await this.prisma.user.findUnique({ where: { email: client.email } })
+    let generatedPassword: string | undefined
+
+    if (!user) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+      const plain = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+      const passwordHash = await bcrypt.hash(plain, 10)
+      user = await this.prisma.user.create({
+        data: { email: client.email, name: client.name, passwordHash, status: 'ACTIVE' },
+      })
+      generatedPassword = plain
+    }
+
+    const existing = await this.prisma.organizationUser.findUnique({
+      where: { organizationId_userId: { organizationId, userId: user.id } },
+    })
+
+    if (!existing) {
+      await this.prisma.organizationUser.create({
+        data: { organizationId, userId: user.id, roleId: clientRole.id, status: 'ACTIVE' },
+      })
+    } else if (existing.status !== 'ACTIVE') {
+      await this.prisma.organizationUser.update({
+        where: { organizationId_userId: { organizationId, userId: user.id } },
+        data: { status: 'ACTIVE' },
+      })
+    }
+
+    await this.audit.log({
+      userId: requestUserId,
+      organizationId,
+      action: 'client.portal_access_enabled',
+      entity: 'Client',
+      entityId: clientId,
+      after: { email: client.email, userId: user.id },
+    })
+
+    return {
+      email: user.email,
+      isNew: !!generatedPassword,
+      temporaryPassword: generatedPassword,
+    }
   }
 }

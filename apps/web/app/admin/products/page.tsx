@@ -49,7 +49,7 @@ export default function ProductsPage() {
         productsApi.listCategories(),
       ])
       setProducts(prodRes.data ?? [])
-      if (prodRes.total !== undefined) setMeta(prodRes)
+      if (prodRes.meta) setMeta(prodRes.meta)
       setCategories(catRes.data ?? catRes)
     } finally {
       setLoading(false)

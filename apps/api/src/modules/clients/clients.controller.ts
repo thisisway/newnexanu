@@ -58,6 +58,16 @@ export class ClientsController {
     return this.clientsService.remove(orgId, user.sub, id)
   }
 
+  @Post(':id/portal-access')
+  @RequirePermissions('clients:update')
+  enablePortalAccess(
+    @CurrentOrg() orgId: string,
+    @CurrentUser() user: any,
+    @Param('id') clientId: string,
+  ) {
+    return this.clientsService.enablePortalAccess(orgId, clientId, user.sub)
+  }
+
   // ─── Contacts ──────────────────────────────────────────────────────────────
 
   @Post(':id/contacts')

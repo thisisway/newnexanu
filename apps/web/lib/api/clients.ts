@@ -78,4 +78,7 @@ export const clientsApi = {
 
   deleteNote: (clientId: string, noteId: string) =>
     api.delete(`/admin/clients/${clientId}/notes/${noteId}`).then((r) => r.data),
+
+  enablePortalAccess: (id: string) =>
+    api.post(`/admin/clients/${id}/portal-access`).then((r) => r.data?.data ?? r.data),
 }
