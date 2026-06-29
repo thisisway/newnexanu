@@ -182,7 +182,8 @@ export default function DomainsPage() {
 
   useEffect(() => { load() }, [load])
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: string, name: string) {
+    if (!confirm(`Remover o domínio "${name}"? Esta ação não pode ser desfeita.`)) return
     try {
       await api.delete(`/admin/domains/${id}`)
       toast({ title: 'Domínio removido' })
@@ -247,7 +248,7 @@ export default function DomainsPage() {
           <Button size="icon" variant="ghost" onClick={() => { setEditing(row); setFormOpen(true) }}>
             <Edit2 className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(row.id)}>
+          <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleDelete(row.id, row.name)}>
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
