@@ -175,7 +175,7 @@ export default function ClientsPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
-        <Select value={status} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1) }}>
+        <Select value={status || 'all'} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1) }}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -187,7 +187,7 @@ export default function ClientsPage() {
             <SelectItem value="CANCELLED">Cancelado</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={type} onValueChange={(v) => { setType(v === 'all' ? '' : v); setPage(1) }}>
+        <Select value={type || 'all'} onValueChange={(v) => { setType(v === 'all' ? '' : v); setPage(1) }}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>

@@ -249,7 +249,7 @@ export default function SubscriptionsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={status} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1) }}>
+        <Select value={status || 'all'} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1) }}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Todos os status" />
           </SelectTrigger>

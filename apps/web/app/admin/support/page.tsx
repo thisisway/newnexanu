@@ -251,7 +251,7 @@ export default function SupportPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <Select value={status} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1) }}>
+        <Select value={status || 'all'} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1) }}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Todos os status" />
           </SelectTrigger>
@@ -264,7 +264,7 @@ export default function SupportPage() {
             <SelectItem value="CLOSED">Fechado</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={priority} onValueChange={(v) => { setPriority(v === 'all' ? '' : v); setPage(1) }}>
+        <Select value={priority || 'all'} onValueChange={(v) => { setPriority(v === 'all' ? '' : v); setPage(1) }}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Prioridade" />
           </SelectTrigger>

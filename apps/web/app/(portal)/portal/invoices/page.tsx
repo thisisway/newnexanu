@@ -78,7 +78,7 @@ export default function PortalInvoicesPage() {
 
       {/* Filter */}
       <div className="flex items-center gap-3">
-        <Select value={status} onValueChange={(v) => setStatus(v === 'all' ? '' : v)}>
+        <Select value={status || 'all'} onValueChange={(v) => setStatus(v === 'all' ? '' : v)}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Todos os status" />
           </SelectTrigger>
