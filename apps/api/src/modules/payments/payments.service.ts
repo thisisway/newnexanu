@@ -100,7 +100,7 @@ export class PaymentsService {
         data: { status: 'PAID', paidAt: new Date() },
       })
 
-      // Activate order if pending
+      // Activate order and create subscription if pending
       const invoice = await tx.invoice.findUnique({
         where: { id: payment.invoiceId },
         select: { orderId: true },
@@ -108,7 +108,7 @@ export class PaymentsService {
       if (invoice?.orderId) {
         const order = await tx.order.findUnique({
           where: { id: invoice.orderId },
-          select: { status: true, billingCycle: true, clientId: true },
+          select: { status: true, billingCycle: true, clientId: true, organizationId: true },
         })
         if (order?.status === 'PENDING') {
           const now = new Date()
@@ -116,10 +116,38 @@ export class PaymentsService {
             where: { id: invoice.orderId },
             data: { status: 'ACTIVE', activatedAt: now },
           })
+
+          if (order.billingCycle !== 'ONE_TIME') {
+            const nextBilling = this.getNextBillingDate(now, order.billingCycle)
+            await tx.subscription.create({
+              data: {
+                organizationId: order.organizationId,
+                orderId: invoice.orderId,
+                clientId: order.clientId!,
+                status: 'ACTIVE',
+                currentPeriodStart: now,
+                currentPeriodEnd: nextBilling,
+                nextBillingDate: nextBilling,
+              },
+            })
+          }
         }
       }
 
       return confirmed
     })
+  }
+
+  private getNextBillingDate(from: Date, cycle: string): Date {
+    const d = new Date(from)
+    switch (cycle) {
+      case 'MONTHLY': d.setMonth(d.getMonth() + 1); break
+      case 'QUARTERLY': d.setMonth(d.getMonth() + 3); break
+      case 'SEMIANNUAL': d.setMonth(d.getMonth() + 6); break
+      case 'ANNUAL': d.setFullYear(d.getFullYear() + 1); break
+      case 'BIANNUAL': d.setFullYear(d.getFullYear() + 2); break
+      default: d.setMonth(d.getMonth() + 1)
+    }
+    return d
   }
 }
