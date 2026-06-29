@@ -73,6 +73,8 @@ function clearAuthStorage() {
   localStorage.removeItem('nexano_refresh_token')
   localStorage.removeItem('nexano_user')
   localStorage.removeItem('nexano_org_id')
+  // Clear the cookie so the middleware stops redirecting away from /login
+  document.cookie = 'nexano_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
 }
 
 export function getErrorMessage(error: unknown): string {
