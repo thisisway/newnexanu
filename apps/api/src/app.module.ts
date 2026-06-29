@@ -21,6 +21,9 @@ import { TicketsModule } from './modules/tickets/tickets.module'
 import { MailModule } from './modules/mail/mail.module'
 import { ServicesModule } from './modules/services/services.module'
 import { IntegrationsModule } from './modules/integrations/integrations.module'
+import { WebhooksModule } from './modules/webhooks/webhooks.module'
+import { ApiKeysModule } from './modules/api-keys/api-keys.module'
+import { DomainsModule } from './modules/domains/domains.module'
 
 @Module({
   imports: [
@@ -52,6 +55,9 @@ import { IntegrationsModule } from './modules/integrations/integrations.module'
     MailModule,
     ServicesModule,
     IntegrationsModule,
+    WebhooksModule,
+    ApiKeysModule,
+    DomainsModule,
   ],
 })
 export class AppModule implements NestModule {

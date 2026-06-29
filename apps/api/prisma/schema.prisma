@@ -35,6 +35,9 @@ model Organization {
   invoices          Invoice[]
   payments          Payment[]
   tickets           Ticket[]
+  webhooks          Webhook[]
+  apiKeys           ApiKey[]
+  domains           Domain[]
 
   @@map("organizations")
 }
@@ -235,6 +238,7 @@ model Client {
   payments       Payment[]
   tickets        Ticket[]
   ticketMessages TicketMessage[]
+  domains        Domain[]
 
   @@unique([organizationId, email])
   @@index([organizationId])
@@ -759,4 +763,113 @@ enum TicketPriority {
   CRITICAL
 
   @@map("ticket_priority")
+}
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────
+
+model Webhook {
+  id              String        @id @default(cuid())
+  organizationId  String
+  name            String
+  url             String
+  secret          String?
+  events          String[]
+  status          WebhookStatus @default(ACTIVE)
+  lastTriggeredAt DateTime?
+  failCount       Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deliveries   WebhookDelivery[]
+
+  @@index([organizationId])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id         String   @id @default(cuid())
+  webhookId  String
+  event      String
+  payload    Json
+  statusCode Int?
+  response   String?
+  success    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@map("webhook_deliveries")
+}
+
+enum WebhookStatus {
+  ACTIVE
+  INACTIVE
+
+  @@map("webhook_status")
+}
+
+// ─── API Keys ─────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  name           String
+  keyPrefix      String
+  keyHash        String
+  scopes         String[]
+  status         ApiKeyStatus @default(ACTIVE)
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+
+  @@map("api_key_status")
+}
+
+// ─── Domains ──────────────────────────────────────────────────────────────
+
+model Domain {
+  id             String       @id @default(cuid())
+  organizationId String
+  clientId       String?
+  name           String
+  status         DomainStatus @default(ACTIVE)
+  registrar      String?
+  expiresAt      DateTime?
+  autoRenew      Boolean      @default(true)
+  notes          String?
+  metadata       Json         @default("{}")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  client       Client?      @relation(fields: [clientId], references: [id])
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([clientId])
+  @@map("domains")
+}
+
+enum DomainStatus {
+  ACTIVE
+  EXPIRED
+  EXPIRING_SOON
+  PENDING_TRANSFER
+  SUSPENDED
+
+  @@map("domain_status")
 }
