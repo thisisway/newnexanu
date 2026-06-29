@@ -74,23 +74,23 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
   return (
     <header
       className={cn(
-        'flex h-14 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-sm',
+        'relative flex h-16 items-center gap-4 bg-card px-4 shadow-sm rounded-b-2xl z-10',
         className,
       )}
     >
       {/* Mobile menu trigger */}
       {onMenuToggle && (
-        <Button variant="ghost" size="icon-sm" onClick={onMenuToggle} className="lg:hidden">
+        <Button variant="ghost" size="icon-sm" onClick={onMenuToggle} className="lg:hidden rounded-xl">
           <Menu className="h-4 w-4" />
         </Button>
       )}
 
       {/* Search */}
-      <div className="flex-1 max-w-md">
+      <div className="flex-1 max-w-sm">
         <Input
           leftIcon={<Search />}
-          placeholder="Buscar clientes, faturas, serviços…"
-          className="h-8 bg-muted/50 text-sm focus-visible:bg-background"
+          placeholder="Buscar clientes, faturas…"
+          className="h-9 rounded-xl bg-accent/60 text-sm border-0 focus-visible:bg-card focus-visible:ring-1"
         />
       </div>
 
@@ -98,17 +98,17 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="relative">
+            <Button variant="ghost" size="icon-sm" className="relative rounded-xl">
               <Bell className="h-4 w-4" />
               {totalAlerts > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white">
                   {totalAlerts > 9 ? '9+' : totalAlerts}
                 </span>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-72">
-            <DropdownMenuLabel className="text-sm font-semibold">Alertas</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-72 rounded-2xl">
+            <DropdownMenuLabel className="text-sm font-semibold font-heading">Alertas</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {notifications.length === 0 ? (
               <div className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -121,10 +121,10 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
                   <DropdownMenuItem
                     key={n.href}
                     onClick={() => router.push(n.href)}
-                    className="flex items-center gap-3 px-3 py-2.5"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl mx-1"
                   >
                     <div className={cn(
-                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                      'flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
                       n.variant === 'warning' ? 'bg-warning/10' : n.variant === 'danger' ? 'bg-danger/10' : 'bg-primary/10',
                     )}>
                       <Icon className={cn(
@@ -133,7 +133,7 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
                       )} />
                     </div>
                     <span className="text-sm">{n.label}</span>
-                    <Badge variant={n.variant} className="ml-auto text-[10px]">Ver</Badge>
+                    <Badge variant={n.variant} className="ml-auto text-[10px] rounded-lg">Ver</Badge>
                   </DropdownMenuItem>
                 )
               })
@@ -147,6 +147,7 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
             <Button
               variant="ghost"
               size="icon-sm"
+              className="rounded-xl"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
@@ -159,29 +160,29 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 gap-2 px-2">
+            <Button variant="ghost" className="h-9 gap-2 px-2 rounded-xl">
               <UserAvatar name={user?.name || 'Usuário'} avatarUrl={user?.avatarUrl} size="sm" />
               <span className="hidden text-sm font-medium md:block">
                 {user?.name?.split(' ')[0] || 'Usuário'}
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 rounded-2xl">
             <DropdownMenuLabel>
               <div>
-                <p className="font-medium">{user?.name}</p>
+                <p className="font-semibold font-heading">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/admin/account')}>
+            <DropdownMenuItem className="rounded-xl mx-1" onClick={() => router.push('/admin/account')}>
               Minha conta
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push('/admin/settings')}>
+            <DropdownMenuItem className="rounded-xl mx-1" onClick={() => router.push('/admin/settings')}>
               Configurações
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem destructive onClick={logout}>
+            <DropdownMenuItem destructive className="rounded-xl mx-1" onClick={logout}>
               Sair da conta
             </DropdownMenuItem>
           </DropdownMenuContent>

@@ -2,102 +2,102 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Nexano Design Tokens ──────────────────────────────────────────────── */
+/* ─── Nexano Design Tokens — inspirados no Gogo template ─────────────────── */
 
 @layer base {
   :root {
-    /* ── Background & Surface ──────────────────────── */
-    --background: 210 40% 98%;       /* #F8FAFC */
-    --foreground: 222 47% 11%;       /* #0F172A */
+    /* ── Backgrounds ──────────────────────────────────── */
+    --background: 0 0% 97%;          /* off-white page */
+    --foreground: 0 0% 18%;          /* near-black text */
 
-    --card: 0 0% 100%;               /* #FFFFFF */
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 100%;               /* pure white cards */
+    --card-foreground: 0 0% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 0 0% 18%;
 
-    /* ── Primary (Nexano Purple) ────────────────────── */
-    --primary: 244 100% 68%;         /* #635BFF */
+    /* ── Primary (Violet — Gogo purple theme) ─────────── */
+    --primary: 267 66% 60%;          /* #8B5CF6 violet */
     --primary-foreground: 0 0% 100%;
 
-    /* ── Secondary / Muted ─────────────────────────── */
-    --secondary: 210 40% 96.1%;      /* #F1F5F9 */
-    --secondary-foreground: 215 25% 27%;
+    /* ── Secondary / Muted ─────────────────────────────── */
+    --secondary: 0 0% 95%;           /* grey-50 */
+    --secondary-foreground: 0 0% 30%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215 16% 47%; /* #64748B */
+    --muted: 0 0% 95%;
+    --muted-foreground: 0 0% 55%;
 
-    /* ── Accent ─────────────────────────────────────── */
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222 47% 11%;
+    /* ── Accent ─────────────────────────────────────────── */
+    --accent: 0 0% 93%;
+    --accent-foreground: 0 0% 25%;
 
-    /* ── Destructive ────────────────────────────────── */
-    --destructive: 0 84% 60%;
+    /* ── Destructive ─────────────────────────────────────── */
+    --destructive: 347 64% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* ── Border & Input ─────────────────────────────── */
-    --border: 220 13% 91%;           /* #E5E7EB */
-    --input: 220 13% 91%;
-    --ring: 244 100% 68%;
+    /* ── Border & Input ──────────────────────────────────── */
+    --border: 0 0% 89%;              /* grey-200 */
+    --input: 0 0% 89%;
+    --ring: 267 66% 60%;
 
-    /* ── Radius ─────────────────────────────────────── */
-    --radius: 0.75rem;
+    /* ── Radius (mais arredondado que o padrão) ─────────── */
+    --radius: 1rem;
 
-    /* ── Sidebar (Light) ────────────────────────────── */
+    /* ── Sidebar ─────────────────────────────────────────── */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 244 100% 68%;
+    --sidebar-foreground: 0 0% 25%;
+    --sidebar-primary: 267 66% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 244 100% 68%;
+    --sidebar-accent: 0 0% 95%;
+    --sidebar-accent-foreground: 0 0% 25%;
+    --sidebar-border: 0 0% 91%;
+    --sidebar-ring: 267 66% 60%;
   }
 
   .dark {
-    /* ── Background & Surface ──────────────────────── */
-    --background: 222 63% 5%;        /* #070A12 */
-    --foreground: 210 40% 98%;       /* #F8FAFC */
+    /* ── Backgrounds ──────────────────────────────────── */
+    --background: 0 0% 11%;          /* dark canvas */
+    --foreground: 0 0% 92%;
 
-    --card: 222 47% 11%;             /* #0F172A */
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 14%;                /* slightly lighter */
+    --card-foreground: 0 0% 92%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 14%;
+    --popover-foreground: 0 0% 92%;
 
-    /* ── Primary (Nexano Purple) ────────────────────── */
-    --primary: 244 100% 68%;
+    /* ── Primary (same violet) ────────────────────────── */
+    --primary: 267 66% 65%;
     --primary-foreground: 0 0% 100%;
 
-    /* ── Secondary / Muted ─────────────────────────── */
-    --secondary: 217 33% 18%;        /* #1F2937 */
-    --secondary-foreground: 210 40% 98%;
+    /* ── Secondary / Muted ─────────────────────────────── */
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 85%;
 
-    --muted: 217 33% 18%;
-    --muted-foreground: 215 20% 65%; /* #94A3B8 */
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 55%;
 
-    /* ── Accent ─────────────────────────────────────── */
-    --accent: 217 33% 18%;
-    --accent-foreground: 210 40% 98%;
+    /* ── Accent ─────────────────────────────────────────── */
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 90%;
 
-    /* ── Destructive ────────────────────────────────── */
-    --destructive: 0 72% 51%;
+    /* ── Destructive ─────────────────────────────────────── */
+    --destructive: 347 64% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* ── Border & Input ─────────────────────────────── */
-    --border: 215 28% 17%;           /* #1F2937 */
-    --input: 215 28% 17%;
-    --ring: 244 100% 68%;
+    /* ── Border & Input ──────────────────────────────────── */
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 267 66% 65%;
 
-    /* ── Sidebar (Dark) ─────────────────────────────── */
-    --sidebar-background: 222 47% 7%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 244 100% 68%;
+    /* ── Sidebar ─────────────────────────────────────────── */
+    --sidebar-background: 0 0% 14%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 267 66% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 15%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 215 28% 17%;
-    --sidebar-ring: 244 100% 68%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 85%;
+    --sidebar-border: 0 0% 22%;
+    --sidebar-ring: 267 66% 65%;
   }
 }
 
@@ -120,54 +120,39 @@
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 
-  h1 {
-    @apply scroll-m-20 text-h1 font-bold tracking-tight;
-  }
-  h2 {
-    @apply scroll-m-20 text-h2 font-semibold tracking-tight;
-  }
-  h3 {
-    @apply scroll-m-20 text-h3 font-semibold tracking-tight;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading), var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    @apply tracking-tight;
   }
 
-  p {
-    @apply text-body leading-relaxed;
-  }
+  h1 { @apply text-h1 font-bold; }
+  h2 { @apply text-h2 font-semibold; }
+  h3 { @apply text-h3 font-semibold; }
 
-  /* Focus visible — acessibilidade */
+  p { @apply text-body leading-relaxed; }
+
   :focus-visible {
     @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
 
   /* Scrollbar personalizada */
-  ::-webkit-scrollbar {
-    @apply w-[6px] h-[6px];
-  }
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-border;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/40;
-  }
+  ::-webkit-scrollbar { @apply w-[5px] h-[5px]; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full bg-border; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/30; }
 }
 
 /* ─── Utility Classes ─────────────────────────────────────────────────────── */
 
 @layer utilities {
-  /* Texto gradiente Nexano */
   .text-gradient {
-    @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent;
   }
 
-  /* Card com hover */
   .card-hover {
-    @apply transition-shadow duration-200 hover:shadow-card-hover;
+    @apply transition-shadow duration-200 hover:shadow-md;
   }
 
-  /* Truncate multi-linha */
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
@@ -175,20 +160,23 @@
     -webkit-line-clamp: 2;
   }
 
-  /* Sidebar transition */
   .sidebar-transition {
     @apply transition-all duration-200 ease-in-out;
   }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.25s ease-out both;
+  }
 }
 
-/* ─── Skeleton pulse animation ──────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes skeleton-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.4;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
 .skeleton {

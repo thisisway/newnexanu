@@ -13,29 +13,30 @@ const config: Config = {
     container: {
       center: true,
       padding: '2rem',
-      screens: {
-        '2xl': '1400px',
-      },
+      screens: { '2xl': '1400px' },
     },
     extend: {
-      colors: {
-        // ── Nexano Brand ──────────────────────────────────────
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-          50: '#EEEEFF',
-          100: '#DDDEFF',
-          200: '#BBBCFF',
-          300: '#9A9BFF',
-          400: '#7879FF',
-          500: '#635BFF',
-          600: '#5146E5',
-          700: '#4338CA',
-          800: '#352BAD',
-          900: '#271E90',
-        },
+      // ── Fonts ──────────────────────────────────────────────────────────────
+      fontFamily: {
+        sans: ['var(--font-body)', 'Mulish', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        heading: ['var(--font-heading)', 'Urbanist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+      },
 
-        // ── Semantic (CSS var-driven) ──────────────────────────
+      // ── Typography ─────────────────────────────────────────────────────────
+      fontSize: {
+        display: ['2.5rem', { lineHeight: '3rem', fontWeight: '700' }],
+        h1: ['2rem',   { lineHeight: '2.5rem', fontWeight: '700' }],
+        h2: ['1.5rem', { lineHeight: '2rem',   fontWeight: '600' }],
+        h3: ['1.25rem',{ lineHeight: '1.75rem',fontWeight: '600' }],
+        body: ['0.875rem', { lineHeight: '1.375rem' }],
+        small: ['0.75rem', { lineHeight: '1.125rem' }],
+        caption: ['0.6875rem', { lineHeight: '1rem' }],
+      },
+
+      // ── Colors ─────────────────────────────────────────────────────────────
+      colors: {
+        // CSS-var driven (shadcn/ui convention)
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
 
@@ -46,6 +47,10 @@ const config: Config = {
         popover: {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
+        },
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -67,41 +72,7 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
 
-        // ── Status colors ─────────────────────────────────────
-        success: {
-          DEFAULT: '#10B981',
-          50: '#ECFDF5',
-          100: '#D1FAE5',
-          500: '#10B981',
-          600: '#059669',
-          foreground: '#FFFFFF',
-        },
-        warning: {
-          DEFAULT: '#F59E0B',
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          500: '#F59E0B',
-          600: '#D97706',
-          foreground: '#FFFFFF',
-        },
-        danger: {
-          DEFAULT: '#EF4444',
-          50: '#FEF2F2',
-          100: '#FEE2E2',
-          500: '#EF4444',
-          600: '#DC2626',
-          foreground: '#FFFFFF',
-        },
-        info: {
-          DEFAULT: '#3B82F6',
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          500: '#3B82F6',
-          600: '#2563EB',
-          foreground: '#FFFFFF',
-        },
-
-        // ── Sidebar-specific ─────────────────────────────────
+        // Sidebar
         sidebar: {
           DEFAULT: 'hsl(var(--sidebar-background))',
           foreground: 'hsl(var(--sidebar-foreground))',
@@ -112,41 +83,64 @@ const config: Config = {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+
+        // Status colors — alinhados com Gogo template
+        success: {
+          DEFAULT: 'hsl(108 45% 52%)',
+          light: 'hsl(108 45% 90%)',
+          foreground: '#fff',
+        },
+        warning: {
+          DEFAULT: 'hsl(25 82% 58%)',
+          light: 'hsl(25 82% 93%)',
+          foreground: '#fff',
+        },
+        danger: {
+          DEFAULT: 'hsl(347 64% 55%)',
+          light: 'hsl(347 64% 93%)',
+          foreground: '#fff',
+        },
+        info: {
+          DEFAULT: 'hsl(193 72% 52%)',
+          light: 'hsl(193 72% 92%)',
+          foreground: '#fff',
+        },
       },
+
+      // ── Border Radius — muito arredondado como o Gogo ─────────────────────
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
-        xl: 'calc(var(--radius) + 4px)',
-        '2xl': 'calc(var(--radius) + 8px)',
+        sm:    '0.5rem',
+        DEFAULT: '0.75rem',
+        md:    '0.875rem',
+        lg:    '1rem',
+        xl:    '1.25rem',
+        '2xl': '1.5rem',
+        '3xl': '1.75rem',
+        '4xl': '2rem',
       },
-      fontFamily: {
-        sans: ['var(--font-geist-sans)', 'Inter', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'JetBrains Mono', 'monospace'],
-      },
-      fontSize: {
-        display: ['2.5rem', { lineHeight: '3rem', fontWeight: '700' }],
-        h1: ['2rem', { lineHeight: '2.5rem', fontWeight: '700' }],
-        h2: ['1.5rem', { lineHeight: '2rem', fontWeight: '600' }],
-        h3: ['1.25rem', { lineHeight: '1.75rem', fontWeight: '600' }],
-        body: ['0.875rem', { lineHeight: '1.375rem' }],
-        small: ['0.75rem', { lineHeight: '1.125rem' }],
-        caption: ['0.6875rem', { lineHeight: '1rem' }],
-      },
+
+      // ── Spacing extras ─────────────────────────────────────────────────────
       spacing: {
         '4.5': '1.125rem',
         '18': '4.5rem',
-        sidebar: '16rem',
+        sidebar: '15rem',
         'sidebar-collapsed': '4rem',
       },
+
+      // ── Shadows suaves como no Gogo ────────────────────────────────────────
       boxShadow: {
-        card: '0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)',
-        'card-hover': '0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07)',
-        dropdown:
-          '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-        modal:
-          '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+        card:   '0 3px 12px rgba(0, 0, 0, 0.05)',
+        'card-hover': '0 6px 20px rgba(0, 0, 0, 0.08)',
+        sm:     '0 3px 8px rgba(0, 0, 0, 0.05)',
+        md:     '0 3px 16px rgba(0, 0, 0, 0.06)',
+        lg:     '0 3px 24px rgba(0, 0, 0, 0.07)',
+        xl:     '0 8px 32px rgba(0, 0, 0, 0.08)',
+        inner:  'inset 0 2px 8px rgba(0, 0, 0, 0.04)',
+        dropdown: '0 8px 24px rgba(0, 0, 0, 0.10)',
+        modal:    '0 16px 48px rgba(0, 0, 0, 0.12)',
       },
+
+      // ── Keyframes ──────────────────────────────────────────────────────────
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
@@ -179,7 +173,7 @@ const config: Config = {
         'slide-in-right': 'slide-in-right 0.25s ease-out',
         'fade-in': 'fade-in 0.15s ease-out',
         'fade-in-up': 'fade-in-up 0.2s ease-out',
-        'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },

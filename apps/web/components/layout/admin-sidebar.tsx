@@ -18,6 +18,7 @@ import {
   Plug,
   Users2,
   Settings,
+  ChevronLeft,
   ChevronRight,
   Cpu,
   Briefcase,
@@ -31,36 +32,35 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Separator } from '@/components/ui/separator'
 
 const mainNav = [
-  { label: 'Visão Geral', href: '/admin/dashboard', icon: LayoutDashboard },
-  { label: 'Clientes', href: '/admin/clients', icon: Users },
-  { label: 'Pedidos', href: '/admin/orders', icon: ShoppingCart },
-  { label: 'Assinaturas', href: '/admin/subscriptions', icon: RefreshCcw },
-  { label: 'Serviços', href: '/admin/services', icon: Server },
-  { label: 'Produtos', href: '/admin/products', icon: Package },
-  { label: 'Faturas', href: '/admin/invoices', icon: FileText },
-  { label: 'Pagamentos', href: '/admin/payments', icon: CreditCard },
-  { label: 'Domínios', href: '/admin/domains', icon: Globe },
-  { label: 'Suporte', href: '/admin/support', icon: HeadphonesIcon },
-  { label: 'Automações', href: '/admin/automations', icon: Zap },
-  { label: 'Relatórios', href: '/admin/reports', icon: BarChart3 },
-  { label: 'Loja', href: '/admin/store', icon: Store },
-  { label: 'Integrações', href: '/admin/integrations', icon: Plug },
-  { label: 'Equipe', href: '/admin/team', icon: Users2 },
-  { label: 'Configurações', href: '/admin/settings', icon: Settings },
+  { label: 'Visão Geral',    href: '/admin/dashboard',      icon: LayoutDashboard },
+  { label: 'Clientes',       href: '/admin/clients',         icon: Users },
+  { label: 'Pedidos',        href: '/admin/orders',          icon: ShoppingCart },
+  { label: 'Assinaturas',    href: '/admin/subscriptions',   icon: RefreshCcw },
+  { label: 'Serviços',       href: '/admin/services',        icon: Server },
+  { label: 'Produtos',       href: '/admin/products',        icon: Package },
+  { label: 'Faturas',        href: '/admin/invoices',        icon: FileText },
+  { label: 'Pagamentos',     href: '/admin/payments',        icon: CreditCard },
+  { label: 'Domínios',       href: '/admin/domains',         icon: Globe },
+  { label: 'Suporte',        href: '/admin/support',         icon: HeadphonesIcon },
+  { label: 'Automações',     href: '/admin/automations',     icon: Zap },
+  { label: 'Relatórios',     href: '/admin/reports',         icon: BarChart3 },
+  { label: 'Loja',           href: '/admin/store',           icon: Store },
+  { label: 'Integrações',    href: '/admin/integrations',    icon: Plug },
+  { label: 'Equipe',         href: '/admin/team',            icon: Users2 },
+  { label: 'Configurações',  href: '/admin/settings',        icon: Settings },
 ]
 
 const techNav = [
   { label: 'Provisionamento', href: '/admin/provisioning', icon: Cpu },
-  { label: 'Jobs', href: '/admin/jobs', icon: Briefcase },
-  { label: 'Webhooks', href: '/admin/webhooks', icon: Webhook },
-  { label: 'Logs', href: '/admin/logs', icon: ScrollText },
-  { label: 'Servidores', href: '/admin/servers', icon: Monitor },
-  { label: 'Módulos', href: '/admin/modules', icon: Boxes },
-  { label: 'Auditoria', href: '/admin/audit', icon: ShieldCheck },
-  { label: 'API', href: '/admin/api', icon: Code },
+  { label: 'Jobs',             href: '/admin/jobs',         icon: Briefcase },
+  { label: 'Webhooks',         href: '/admin/webhooks',     icon: Webhook },
+  { label: 'Logs',             href: '/admin/logs',         icon: ScrollText },
+  { label: 'Servidores',       href: '/admin/servers',      icon: Monitor },
+  { label: 'Módulos',          href: '/admin/modules',      icon: Boxes },
+  { label: 'Auditoria',        href: '/admin/audit',        icon: ShieldCheck },
+  { label: 'API',              href: '/admin/api',          icon: Code },
 ]
 
 interface AdminSidebarProps {
@@ -88,23 +88,15 @@ export function AdminSidebar({ collapsed = false, onCollapse }: AdminSidebarProp
       <Link
         href={item.href}
         className={cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-150',
+          'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
           active
-            ? 'bg-primary/10 font-medium text-primary'
+            ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-          collapsed && 'justify-center px-2',
+          collapsed && 'justify-center px-0',
         )}
       >
-        <Icon
-          className={cn(
-            'h-4 w-4 shrink-0',
-            active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
-          )}
-        />
+        <Icon className={cn('h-[18px] w-[18px] shrink-0', active ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground')} />
         {!collapsed && <span className="truncate">{item.label}</span>}
-        {!collapsed && active && (
-          <ChevronRight className="ml-auto h-3 w-3 shrink-0 text-primary/60" />
-        )}
       </Link>
     )
 
@@ -112,7 +104,7 @@ export function AdminSidebar({ collapsed = false, onCollapse }: AdminSidebarProp
       return (
         <Tooltip>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right" className="ml-1">
+          <TooltipContent side="right" className="ml-2 font-medium">
             {item.label}
           </TooltipContent>
         </Tooltip>
@@ -125,47 +117,48 @@ export function AdminSidebar({ collapsed = false, onCollapse }: AdminSidebarProp
   return (
     <aside
       className={cn(
-        'sidebar-transition flex h-screen flex-col border-r border-sidebar-border bg-sidebar',
-        collapsed ? 'w-16' : 'w-sidebar',
+        'sidebar-transition relative flex h-screen flex-col bg-sidebar shadow-md',
+        collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
       )}
     >
       {/* Logo */}
       <div
         className={cn(
-          'flex h-14 items-center border-b border-sidebar-border px-4',
-          collapsed && 'justify-center px-2',
+          'flex h-16 shrink-0 items-center px-4',
+          collapsed && 'justify-center px-0',
         )}
       >
         {collapsed ? (
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <span className="text-sm font-bold">N</span>
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <span className="text-sm font-bold font-heading">N</span>
           </div>
         ) : (
-          <Link href="/admin/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <span className="text-sm font-bold">N</span>
+          <Link href="/admin/dashboard" className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+              <span className="text-sm font-bold font-heading">N</span>
             </div>
-            <span className="text-sm font-bold text-foreground">Nexano</span>
+            <span className="text-base font-bold font-heading text-foreground tracking-tight">Nexano</span>
           </Link>
         )}
       </div>
 
+      {/* Divider */}
+      <div className="mx-3 h-px bg-border" />
+
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto p-2">
-        <div className="space-y-0.5">
-          {mainNav.map((item) => (
-            <NavItem key={item.href} item={item} />
-          ))}
-        </div>
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
+        {mainNav.map((item) => (
+          <NavItem key={item.href} item={item} />
+        ))}
 
-        <Separator className="my-3" />
-
-        {!collapsed && (
-          <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-            Técnico
-          </p>
-        )}
-        <div className="space-y-0.5">
+        {/* Tech section */}
+        <div className="pt-3">
+          {!collapsed && (
+            <p className="mb-1 px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+              Técnico
+            </p>
+          )}
+          {collapsed && <div className="my-2 mx-1 h-px bg-border" />}
           {techNav.map((item) => (
             <NavItem key={item.href} item={item} />
           ))}
@@ -174,18 +167,22 @@ export function AdminSidebar({ collapsed = false, onCollapse }: AdminSidebarProp
 
       {/* Collapse button */}
       {onCollapse && (
-        <div className="border-t border-sidebar-border p-2">
+        <div className="mx-2 mb-3">
           <button
             onClick={() => onCollapse(!collapsed)}
             className={cn(
-              'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
-              collapsed && 'justify-center px-2',
+              'flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
+              collapsed && 'justify-center px-0',
             )}
           >
-            <ChevronRight
-              className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')}
-            />
-            {!collapsed && 'Recolher'}
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4" />
+                <span>Recolher</span>
+              </>
+            )}
           </button>
         </div>
       )}

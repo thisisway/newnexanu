@@ -6,7 +6,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        'rounded-xl border border-border bg-card text-card-foreground shadow-card transition-shadow duration-200',
+        'rounded-2xl border border-border bg-card text-card-foreground shadow-card transition-shadow duration-200',
         className,
       )}
       {...props}
@@ -26,7 +26,7 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('text-base font-semibold leading-none tracking-tight', className)}
+      className={cn('text-base font-semibold leading-none tracking-tight font-heading', className)}
       {...props}
     />
   ),
@@ -75,7 +75,7 @@ function MetricCard({ title, value, description, icon, trend, className }: Metri
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-h2 font-bold">{value}</p>
+            <p className="text-h2 font-bold font-heading">{value}</p>
             {description && <p className="text-xs text-muted-foreground">{description}</p>}
             {trend && (
               <p
@@ -92,7 +92,7 @@ function MetricCard({ title, value, description, icon, trend, className }: Metri
             )}
           </div>
           {icon && (
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary [&_svg]:h-5 [&_svg]:w-5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary [&_svg]:h-5 [&_svg]:w-5">
               {icon}
             </div>
           )}

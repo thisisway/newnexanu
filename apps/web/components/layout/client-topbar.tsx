@@ -64,7 +64,7 @@ export function ClientTopbar({ className }: ClientTopbarProps) {
   return (
     <header
       className={cn(
-        'flex h-14 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur-sm',
+        'relative flex h-16 items-center gap-4 bg-card px-4 shadow-sm rounded-b-2xl z-10',
         className,
       )}
     >
@@ -74,17 +74,17 @@ export function ClientTopbar({ className }: ClientTopbarProps) {
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon-sm" className="relative">
+            <Button variant="ghost" size="icon-sm" className="relative rounded-xl">
               <Bell className="h-4 w-4" />
               {totalAlerts > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[9px] font-bold text-white">
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-danger text-[9px] font-bold text-white">
                   {totalAlerts > 9 ? '9+' : totalAlerts}
                 </span>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            <DropdownMenuLabel className="text-sm font-semibold">Notificações</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-64 rounded-2xl">
+            <DropdownMenuLabel className="text-sm font-semibold font-heading">Notificações</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {notifications.length === 0 ? (
               <div className="px-3 py-6 text-center text-sm text-muted-foreground">
@@ -138,10 +138,10 @@ export function ClientTopbar({ className }: ClientTopbarProps) {
               </span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 rounded-2xl">
             <DropdownMenuLabel>
               <div>
-                <p className="font-medium">{user?.name}</p>
+                <p className="font-semibold font-heading">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
