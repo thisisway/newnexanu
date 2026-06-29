@@ -56,7 +56,7 @@ export default function OrderDetailPage() {
   }, [id])
 
   async function handleActivate() {
-    if (!order) return
+    if (!order || !confirm('Ativar este pedido? Isso criará uma assinatura ativa para o cliente.')) return
     setActing(true)
     try {
       const updated = await ordersApi.activate(order.id)
@@ -78,8 +78,13 @@ export default function OrderDetailPage() {
   }
 
   async function handleMarkInvoicePaid(invoiceId: string) {
-    await invoicesApi.markPaid(invoiceId)
-    await loadInvoices()
+    if (!confirm('Marcar fatura como paga manualmente?')) return
+    try {
+      await invoicesApi.markPaid(invoiceId)
+      await loadInvoices()
+    } catch {
+      alert('Erro ao marcar fatura como paga.')
+    }
   }
 
   if (loading) {

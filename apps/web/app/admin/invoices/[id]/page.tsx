@@ -73,8 +73,10 @@ export default function InvoiceDetailPage() {
 
   async function handleMarkPaid() {
     if (!invoice) return
+    if (!confirm('Marcar como paga manualmente? Isso não registra um pagamento — use somente para conciliação.')) return
     setActing(true)
     try { await invoicesApi.markPaid(invoice.id); await refresh() }
+    catch (e: any) { toast({ title: 'Erro', description: e?.response?.data?.message ?? 'Erro ao marcar como paga.', variant: 'destructive' }) }
     finally { setActing(false) }
   }
 
@@ -97,8 +99,13 @@ export default function InvoiceDetailPage() {
   }
 
   async function handleConfirmPayment(payId: string) {
-    await paymentsApi.confirm(payId)
-    await refresh()
+    if (!confirm('Confirmar este pagamento? A fatura será marcada como paga.')) return
+    try {
+      await paymentsApi.confirm(payId)
+      await refresh()
+    } catch (e: any) {
+      toast({ title: 'Erro ao confirmar', description: e?.response?.data?.message ?? 'Tente novamente.', variant: 'destructive' })
+    }
   }
 
   async function handleSendEmail() {

@@ -83,7 +83,12 @@ export default function ServicesPage() {
   useEffect(() => { load() }, [load])
 
   async function handleAction(svcId: string, action: 'suspend' | 'reactivate' | 'cancel') {
-    if (action === 'cancel' && !confirm('Cancelar este serviço? Esta ação não pode ser desfeita.')) return
+    const messages = {
+      suspend: 'Suspender este serviço?',
+      reactivate: 'Reativar este serviço?',
+      cancel: 'Cancelar este serviço? Esta ação não pode ser desfeita.',
+    }
+    if (!confirm(messages[action])) return
     setActing(svcId)
     try {
       await api.post(`/admin/services/${svcId}/${action}`)

@@ -59,7 +59,12 @@ export default function ServiceDetailPage() {
   useEffect(() => { refresh().finally(() => setLoading(false)) }, [id])
 
   async function handleAction(action: 'suspend' | 'reactivate' | 'cancel') {
-    if (action === 'cancel' && !confirm('Cancelar este serviço?')) return
+    const messages = {
+      suspend: 'Suspender este serviço?',
+      reactivate: 'Reativar este serviço?',
+      cancel: 'Cancelar este serviço? Esta ação não pode ser desfeita.',
+    }
+    if (!confirm(messages[action])) return
     setActing(true)
     try { await api.post(`/admin/services/${id}/${action}`); await refresh() }
     finally { setActing(false) }

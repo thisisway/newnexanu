@@ -61,6 +61,7 @@ export default function SubscriptionsPage() {
   }
 
   async function handleReactivate(id: string) {
+    if (!confirm('Reativar esta assinatura?')) return
     await subscriptionsApi.reactivate(id)
     fetchSubs()
   }
@@ -72,6 +73,7 @@ export default function SubscriptionsPage() {
   }
 
   async function handleCancelAtEnd(id: string) {
+    if (!confirm('Cancelar ao final do período atual? O cliente mantém acesso até o vencimento.')) return
     await subscriptionsApi.cancel(id, true)
     fetchSubs()
   }

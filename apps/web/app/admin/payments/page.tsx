@@ -65,8 +65,13 @@ export default function PaymentsPage() {
   useEffect(() => { fetchPayments() }, [fetchPayments])
 
   async function handleConfirm(id: string) {
-    await paymentsApi.confirm(id)
-    fetchPayments()
+    if (!confirm('Confirmar este pagamento? A fatura será marcada como paga e o pedido ativado.')) return
+    try {
+      await paymentsApi.confirm(id)
+      fetchPayments()
+    } catch (e: any) {
+      alert(e?.response?.data?.message ?? 'Erro ao confirmar pagamento.')
+    }
   }
 
   const paid = payments.filter((p) => p.status === 'PAID')
