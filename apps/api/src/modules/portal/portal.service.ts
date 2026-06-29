@@ -28,7 +28,7 @@ export class PortalService {
 
     const [openInvoices, activeOrders, openTickets, recentInvoices] = await Promise.all([
       this.prisma.invoice.count({
-        where: { organizationId: orgId, clientId: client.id, status: 'OPEN' },
+        where: { organizationId: orgId, clientId: client.id, status: { in: ['OPEN', 'OVERDUE'] } },
       }),
       this.prisma.order.count({
         where: { organizationId: orgId, clientId: client.id, status: 'ACTIVE' },
