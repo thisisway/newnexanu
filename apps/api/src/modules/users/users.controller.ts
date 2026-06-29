@@ -54,6 +54,11 @@ export class UsersController {
     return this.usersService.updateMemberRole(orgId, userId, roleId, user.sub)
   }
 
+  @Get('account/profile')
+  getProfile(@CurrentUser() user: JwtPayload) {
+    return this.usersService.getProfileById(user.sub)
+  }
+
   @Patch('account/profile')
   updateProfile(@CurrentUser() user: JwtPayload, @Body() dto: UpdateUserDto) {
     return this.usersService.updateProfile(user.sub, dto, user.sub)

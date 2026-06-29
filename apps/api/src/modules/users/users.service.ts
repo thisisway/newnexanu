@@ -69,6 +69,15 @@ export class UsersService {
     return membership
   }
 
+  async getProfileById(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, avatarUrl: true, phone: true },
+    })
+    if (!user) throw new NotFoundException('Usuário não encontrado.')
+    return user
+  }
+
   async updateProfile(userId: string, dto: UpdateUserDto, requestUserId: string) {
     if (userId !== requestUserId) {
       throw new ForbiddenException('Você não pode editar o perfil de outro usuário.')
