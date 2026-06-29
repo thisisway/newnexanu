@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Plus, Pencil, Trash2, Star, MoreHorizontal,
 } from 'lucide-react'
-import { productsApi, Product, Plan, CYCLE_LABELS, PRODUCT_TYPE_LABELS, formatCurrency } from '@/lib/api/products'
+import { productsApi, Product, Plan, ProductCategory, CYCLE_LABELS, PRODUCT_TYPE_LABELS, formatCurrency } from '@/lib/api/products'
 import { Button } from '@/components/ui/button'
 import { Badge, StatusBadge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -20,12 +20,16 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [product, setProduct] = useState<Product | null>(null)
+  const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loading, setLoading] = useState(true)
   const [editProductOpen, setEditProductOpen] = useState(false)
   const [planDrawerOpen, setPlanDrawerOpen] = useState(false)
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>()
 
-  useEffect(() => { load() }, [id])
+  useEffect(() => {
+    load()
+    productsApi.listCategories().then((res) => setCategories(res.data ?? res)).catch(() => {})
+  }, [id])
 
   async function load() {
     setLoading(true)
@@ -209,7 +213,7 @@ export default function ProductDetailPage() {
         onClose={() => setEditProductOpen(false)}
         onSuccess={() => { setEditProductOpen(false); load() }}
         product={product}
-        categories={[]}
+        categories={categories}
       />
 
       <PlanFormDrawer
