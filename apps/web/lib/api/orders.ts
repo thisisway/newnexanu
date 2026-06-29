@@ -101,7 +101,7 @@ export const ordersApi = {
 }
 
 export const invoicesApi = {
-  list: (params?: { clientId?: string; status?: string; page?: number; limit?: number }) =>
+  list: (params?: { clientId?: string; orderId?: string; status?: string; page?: number; limit?: number }) =>
     api.get('/admin/invoices', { params }).then((r) => r.data),
 
   get: (id: string) =>

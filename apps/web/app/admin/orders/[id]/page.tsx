@@ -40,14 +40,18 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState(false)
 
+  async function loadInvoices() {
+    const inv = await invoicesApi.list({ orderId: id, limit: 50 })
+    setInvoices(inv.data ?? inv)
+  }
+
   useEffect(() => {
     Promise.all([
       ordersApi.get(id),
-      invoicesApi.list({ clientId: undefined, status: undefined, page: 1, limit: 50 }),
+      invoicesApi.list({ orderId: id, limit: 50 }),
     ]).then(([ord, inv]) => {
       setOrder(ord)
-      const list = inv.data ?? inv
-      setInvoices(list.filter((i: Invoice) => i.orderId === id))
+      setInvoices(inv.data ?? inv)
     }).finally(() => setLoading(false))
   }, [id])
 
@@ -75,9 +79,7 @@ export default function OrderDetailPage() {
 
   async function handleMarkInvoicePaid(invoiceId: string) {
     await invoicesApi.markPaid(invoiceId)
-    const updated = await invoicesApi.list({ page: 1, limit: 50 })
-    const list = updated.data ?? updated
-    setInvoices(list.filter((i: Invoice) => i.orderId === id))
+    await loadInvoices()
   }
 
   if (loading) {

@@ -10,12 +10,14 @@ export class InvoicesController {
   findAll(
     @CurrentOrg() orgId: string,
     @Query('clientId') clientId?: string,
+    @Query('orderId') orderId?: string,
     @Query('status') status?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
     return this.service.findAll(orgId, {
       clientId,
+      orderId,
       status,
       page: page ? Number(page) : 1,
       limit: limit ? Number(limit) : 20,

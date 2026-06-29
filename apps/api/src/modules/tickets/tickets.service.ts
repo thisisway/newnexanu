@@ -111,7 +111,7 @@ export class TicketsService {
     })
     await this.prisma.ticket.update({
       where: { id: ticketId },
-      data: { status: 'IN_PROGRESS', updatedAt: new Date() },
+      data: { status: 'WAITING_CLIENT', updatedAt: new Date() },
     })
 
     if (!isInternal && ticket.client?.email) {
@@ -196,7 +196,7 @@ export class TicketsService {
     })
     await this.prisma.ticket.update({
       where: { id: ticket.id },
-      data: { status: 'WAITING_CLIENT', updatedAt: new Date() },
+      data: { status: 'IN_PROGRESS', updatedAt: new Date() },
     })
     return message
   }

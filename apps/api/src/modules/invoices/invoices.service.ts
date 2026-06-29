@@ -14,12 +14,13 @@ export class InvoicesService {
 
   async findAll(
     organizationId: string,
-    params: { clientId?: string; status?: string; page?: number; limit?: number },
+    params: { clientId?: string; orderId?: string; status?: string; page?: number; limit?: number },
   ) {
-    const { clientId, status, page = 1, limit = 20 } = params
+    const { clientId, orderId, status, page = 1, limit = 20 } = params
     const where: Prisma.InvoiceWhereInput = {
       organizationId,
       ...(clientId && { clientId }),
+      ...(orderId && { orderId }),
       ...(status && { status: status as any }),
     }
 
