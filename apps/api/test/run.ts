@@ -9,3 +9,4 @@ import 'reflect-metadata'
 
 import '../src/common/utils/money.spec'
 import '../src/modules/plans/plans.service.spec'
+import '../src/modules/portal/portal.service.spec'
