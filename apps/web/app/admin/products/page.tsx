@@ -7,7 +7,7 @@ import { useDebounce } from '@/hooks/use-debounce'
 import {
   Package, Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RefreshCw, Tag,
 } from 'lucide-react'
-import { productsApi, Product, ProductCategory, PRODUCT_TYPE_LABELS } from '@/lib/api/products'
+import { productsApi, Product, ProductCategory, PRODUCT_TYPE_LABELS, formatCurrency } from '@/lib/api/products'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge, StatusBadge } from '@/components/ui/badge'
@@ -108,6 +108,17 @@ export default function ProductsPage() {
         <span className="text-sm font-medium text-foreground">
           {row._count?.plans ?? 0}
         </span>
+      ),
+    },
+    {
+      key: 'lowestPrice',
+      header: 'A partir de',
+      cell: (row) => (
+        row.lowestPrice != null ? (
+          <span className="text-sm font-medium text-foreground">{formatCurrency(row.lowestPrice)}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )
       ),
     },
     {

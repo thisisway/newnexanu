@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import { PlansService } from './plans.service'
 import { CreatePlanDto } from './dto/create-plan.dto'
 import { UpdatePlanDto } from './dto/update-plan.dto'
+import { CreatePriceDto } from './dto/create-price.dto'
 import { CreateAddonDto } from './dto/create-addon.dto'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { CurrentOrg } from '../../common/decorators/current-org.decorator'
@@ -43,7 +44,7 @@ export class PlansController {
 
   @Post(':id/prices')
   @RequirePermissions('products:update')
-  addPrice(@CurrentOrg() orgId: string, @Param('id') planId: string, @Body() dto: any) {
+  addPrice(@CurrentOrg() orgId: string, @Param('id') planId: string, @Body() dto: CreatePriceDto) {
     return this.plansService.addPrice(orgId, planId, dto)
   }
 

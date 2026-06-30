@@ -71,7 +71,7 @@ export class ProductsService {
       }),
     }
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
         skip,
@@ -80,10 +80,22 @@ export class ProductsService {
         include: {
           category: { select: { id: true, name: true, icon: true } },
           _count: { select: { plans: true } },
+          plans: {
+            where: { status: 'ACTIVE' },
+            select: { prices: { select: { amount: true, currency: true } } },
+          },
         },
       }),
       this.prisma.product.count({ where }),
     ])
+
+    // Surface the cheapest active price per product for the listing, then drop
+    // the heavy plans/prices payload that was only needed for that calculation.
+    const data = rows.map(({ plans, ...product }) => {
+      const amounts = plans.flatMap((p) => p.prices.map((pr) => Number(pr.amount)))
+      const lowestPrice = amounts.length ? Math.min(...amounts).toFixed(2) : null
+      return { ...product, lowestPrice }
+    })
 
     return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } }
   }

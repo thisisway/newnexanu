@@ -23,6 +23,7 @@ export interface Product {
   sortOrder: number
   createdAt: string
   plans?: Plan[]
+  lowestPrice?: string | null
   _count?: { plans: number }
 }
 
