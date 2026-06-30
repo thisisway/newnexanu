@@ -1,9 +1,14 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { OrdersService } from '../orders/orders.service'
+import { CreatePortalOrderDto } from './dto/create-portal-order.dto'
 
 @Injectable()
 export class PortalService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private ordersService: OrdersService,
+  ) {}
 
   private async findClientByUser(userId: string, orgId: string) {
     const user = await this.prisma.user.findUnique({
@@ -99,6 +104,51 @@ export class PortalService {
     if (!invoice) throw new NotFoundException('Fatura não encontrada.')
     if (invoice.clientId !== client.id) throw new ForbiddenException('Acesso negado.')
     return client
+  }
+
+  // ── Store / Catalog ────────────────────────────────────────────────────────
+
+  async getCatalog(orgId: string) {
+    return this.prisma.product.findMany({
+      where: {
+        organizationId: orgId,
+        status: 'ACTIVE',
+        plans: { some: { status: 'ACTIVE' } },
+      },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      include: {
+        category: { select: { id: true, name: true, slug: true } },
+        plans: {
+          where: { status: 'ACTIVE' },
+          orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+          include: { prices: { orderBy: { amount: 'asc' } } },
+        },
+      },
+    })
+  }
+
+  async createOrder(userId: string, orgId: string, dto: CreatePortalOrderDto) {
+    const client = await this.findClientByUser(userId, orgId)
+
+    // The price must belong to an active plan of this organization, otherwise a
+    // client could craft a request to order another tenant's plan.
+    const planPrice = await this.prisma.planPrice.findFirst({
+      where: {
+        id: dto.planPriceId,
+        planId: dto.planId,
+        plan: { organizationId: orgId, status: 'ACTIVE' },
+      },
+    })
+    if (!planPrice) throw new NotFoundException('Plano indisponível para contratação.')
+
+    return this.ordersService.create(orgId, {
+      clientId: client.id,
+      planId: dto.planId,
+      planPriceId: dto.planPriceId,
+      billingCycle: planPrice.cycle,
+      quantity: 1,
+      notes: dto.notes,
+    })
   }
 
   async getDomains(userId: string, orgId: string) {

@@ -3,6 +3,7 @@ import { PortalService } from './portal.service'
 import { TicketsService } from '../tickets/tickets.service'
 import { PaymentsService } from '../payments/payments.service'
 import { CreateTicketDto } from '../tickets/dto/create-ticket.dto'
+import { CreatePortalOrderDto } from './dto/create-portal-order.dto'
 import { CurrentUser, JwtPayload } from '../../common/decorators/current-user.decorator'
 import { CurrentOrg } from '../../common/decorators/current-org.decorator'
 
@@ -42,6 +43,22 @@ export class PortalController {
   @Get('orders')
   getOrders(@CurrentUser() user: JwtPayload, @CurrentOrg() orgId: string) {
     return this.service.getOrders(user.sub, orgId)
+  }
+
+  // ── Store ──────────────────────────────────────────────────────────────────
+
+  @Get('catalog')
+  getCatalog(@CurrentOrg() orgId: string) {
+    return this.service.getCatalog(orgId)
+  }
+
+  @Post('orders')
+  createOrder(
+    @CurrentUser() user: JwtPayload,
+    @CurrentOrg() orgId: string,
+    @Body() dto: CreatePortalOrderDto,
+  ) {
+    return this.service.createOrder(user.sub, orgId, dto)
   }
 
   // ── Tickets ──────────────────────────────────────────────────────────────

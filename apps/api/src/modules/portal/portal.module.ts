@@ -3,9 +3,10 @@ import { PortalController } from './portal.controller'
 import { PortalService } from './portal.service'
 import { TicketsModule } from '../tickets/tickets.module'
 import { PaymentsModule } from '../payments/payments.module'
+import { OrdersModule } from '../orders/orders.module'
 
 @Module({
-  imports: [TicketsModule, PaymentsModule],
+  imports: [TicketsModule, PaymentsModule, OrdersModule],
   controllers: [PortalController],
   providers: [PortalService],
 })
