@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   ArrowLeft, Server, User, CreditCard, FileText, Calendar,
-  Pause, Play, XCircle, RefreshCw, Save,
+  Pause, Play, XCircle, RefreshCw, Save, Clock, CircleDot,
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { CYCLE_LABELS, INVOICE_STATUS_LABELS, SUBSCRIPTION_STATUS_LABELS, formatCurrency } from '@/lib/api/orders'
@@ -234,6 +234,98 @@ export default function ServiceDetailPage() {
               </CardContent>
             </Card>
           )}
+          {/* Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <Clock className="h-4 w-4 text-primary" /> Linha do tempo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const events: { date: Date; label: string; sub?: string; variant: 'success' | 'warning' | 'danger' | 'default' }[] = []
+
+                events.push({
+                  date: new Date(svc.createdAt),
+                  label: 'Serviço criado',
+                  sub: svc.client?.name,
+                  variant: 'default',
+                })
+
+                if (svc.activatedAt) {
+                  events.push({
+                    date: new Date(svc.activatedAt),
+                    label: 'Serviço ativado',
+                    sub: svc.plan?.name,
+                    variant: 'success',
+                  })
+                }
+
+                svc.invoices?.forEach((inv) => {
+                  events.push({
+                    date: new Date(inv.createdAt),
+                    label: `Fatura ${inv.number} gerada`,
+                    sub: formatCurrency(inv.total),
+                    variant: 'default',
+                  })
+                  if (inv.status === 'OVERDUE') {
+                    events.push({
+                      date: new Date(inv.dueDate),
+                      label: `Fatura ${inv.number} venceu sem pagamento`,
+                      variant: 'danger',
+                    })
+                  }
+                })
+
+                if (svc.status === 'SUSPENDED' && !svc.cancelledAt) {
+                  events.push({
+                    date: new Date(),
+                    label: 'Serviço suspenso',
+                    variant: 'warning',
+                  })
+                }
+
+                if (svc.cancelledAt) {
+                  events.push({
+                    date: new Date(svc.cancelledAt),
+                    label: 'Serviço cancelado',
+                    variant: 'danger',
+                  })
+                }
+
+                events.sort((a, b) => a.date.getTime() - b.date.getTime())
+
+                const colorMap = {
+                  success: 'bg-success text-white',
+                  warning: 'bg-warning text-white',
+                  danger: 'bg-danger text-white',
+                  default: 'bg-muted-foreground/20 text-muted-foreground',
+                }
+
+                return (
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-0 h-full w-px bg-border" />
+                    <div className="flex flex-col gap-4">
+                      {events.map((ev, i) => (
+                        <div key={i} className="flex items-start gap-3 pl-8 relative">
+                          <div className={`absolute left-0 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${colorMap[ev.variant]}`}>
+                            <CircleDot className="h-3.5 w-3.5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{ev.label}</p>
+                            {ev.sub && <p className="text-xs text-muted-foreground">{ev.sub}</p>}
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {ev.date.toLocaleString('pt-BR')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right column */}

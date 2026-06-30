@@ -2,8 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { ArrowLeft, Send, Lock, User } from 'lucide-react'
+import {
+  ArrowLeft, Send, Lock, User, Server, FileText,
+  HeadphonesIcon, ExternalLink, AlertCircle,
+} from 'lucide-react'
 import { ticketsApi, Ticket, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from '@/lib/api/tickets'
+import { ordersApi, invoicesApi, Order, Invoice, formatCurrency, INVOICE_STATUS_LABELS } from '@/lib/api/orders'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,6 +23,9 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
 const PRIORITY_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
   LOW: 'outline', MEDIUM: 'default', HIGH: 'warning', CRITICAL: 'danger',
 }
+const INVOICE_STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'outline'> = {
+  OPEN: 'warning', OVERDUE: 'danger', PAID: 'success', DRAFT: 'outline', CANCELLED: 'outline',
+}
 
 export default function TicketDetailPage() {
   const router = useRouter()
@@ -30,13 +37,34 @@ export default function TicketDetailPage() {
   const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
+  // Client context
+  const [clientOrders, setClientOrders] = useState<Order[]>([])
+  const [clientInvoices, setClientInvoices] = useState<Invoice[]>([])
+  const [clientTickets, setClientTickets] = useState<Ticket[]>([])
+
   async function load() {
     const data = await ticketsApi.get(id)
-    setTicket(data.data ?? data)
+    const t = data.data ?? data
+    setTicket(t)
+    return t
   }
 
   useEffect(() => {
-    load().finally(() => setLoading(false))
+    load()
+      .then(async (t) => {
+        if (!t.client?.id) return
+        const clientId = t.client.id
+        const [ord, inv, tix] = await Promise.all([
+          ordersApi.list({ clientId, limit: 5 }),
+          invoicesApi.list({ clientId, limit: 5 }),
+          ticketsApi.list({ clientId, limit: 6 }),
+        ])
+        setClientOrders(ord.data ?? ord)
+        setClientInvoices(inv.data ?? inv)
+        const allTix: Ticket[] = tix.data ?? tix
+        setClientTickets(allTix.filter((tk) => tk.id !== id))
+      })
+      .finally(() => setLoading(false))
   }, [id])
 
   useEffect(() => {
@@ -69,6 +97,9 @@ export default function TicketDetailPage() {
 
   if (!ticket) return null
 
+  const activeOrders = clientOrders.filter((o) => o.status === 'ACTIVE')
+  const pendingInvoices = clientInvoices.filter((i) => ['OPEN', 'OVERDUE'].includes(i.status))
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -78,7 +109,7 @@ export default function TicketDetailPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-h2 font-semibold">#{ticket.number} — {ticket.subject}</h1>
               <Badge variant={STATUS_VARIANTS[ticket.status] ?? 'outline'}>
                 {TICKET_STATUS_LABELS[ticket.status]}
@@ -99,7 +130,6 @@ export default function TicketDetailPage() {
         <div className="flex flex-col gap-4 lg:col-span-3">
           <Card>
             <CardContent className="flex flex-col gap-4 p-5">
-              {/* Messages list */}
               <div className="flex flex-col gap-4 max-h-[500px] overflow-y-auto">
                 {ticket.messages?.map((msg) => {
                   const isStaff = !!msg.user
@@ -124,7 +154,7 @@ export default function TicketDetailPage() {
                             {new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
-                        <div className={`rounded-xl px-4 py-2.5 text-sm ${
+                        <div className={`rounded-xl px-4 py-2.5 text-sm whitespace-pre-wrap ${
                           msg.isInternal
                             ? 'border border-warning/30 bg-warning/5 text-foreground'
                             : isStaff
@@ -140,7 +170,6 @@ export default function TicketDetailPage() {
                 <div ref={bottomRef} />
               </div>
 
-              {/* Reply box */}
               {!['CLOSED', 'RESOLVED'].includes(ticket.status) && (
                 <div className="border-t border-border pt-4">
                   <Textarea
@@ -211,7 +240,11 @@ export default function TicketDetailPage() {
           {/* Client info */}
           {ticket.client && (
             <Card>
-              <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><User className="h-4 w-4" /> Cliente</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <User className="h-4 w-4" /> Cliente
+                </CardTitle>
+              </CardHeader>
               <CardContent className="flex flex-col gap-1">
                 <p className="font-medium text-sm">{ticket.client.name}</p>
                 <p className="text-xs text-muted-foreground">{ticket.client.email}</p>
@@ -221,10 +254,128 @@ export default function TicketDetailPage() {
                   className="mt-2"
                   onClick={() => router.push(`/admin/clients/${ticket.client!.id}`)}
                 >
-                  Ver perfil
+                  Ver perfil completo <ExternalLink className="ml-1.5 h-3 w-3" />
                 </Button>
               </CardContent>
             </Card>
+          )}
+
+          {/* Active services */}
+          {ticket.client && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Server className="h-4 w-4" /> Serviços ativos
+                  </span>
+                  <Badge variant={activeOrders.length > 0 ? 'success' : 'outline'} className="text-[10px]">
+                    {activeOrders.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {activeOrders.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum serviço ativo.</p>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    {activeOrders.map((o) => (
+                      <div
+                        key={o.id}
+                        className="flex items-center justify-between cursor-pointer rounded-lg px-2 py-1.5 hover:bg-muted/50 transition-colors"
+                        onClick={() => router.push(`/admin/orders/${o.id}`)}
+                      >
+                        <p className="text-xs font-medium truncate">{o.plan?.name ?? 'Serviço'}</p>
+                        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Open invoices */}
+          {ticket.client && (
+            <Card className={pendingInvoices.length > 0 ? 'border-warning/40' : ''}>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <FileText className={`h-4 w-4 ${pendingInvoices.length > 0 ? 'text-warning' : ''}`} />
+                    Faturas pendentes
+                  </span>
+                  <Badge variant={pendingInvoices.length > 0 ? 'warning' : 'outline'} className="text-[10px]">
+                    {pendingInvoices.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pendingInvoices.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhuma fatura pendente.</p>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    {pendingInvoices.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="flex items-center justify-between cursor-pointer rounded-lg px-2 py-1.5 hover:bg-muted/50 transition-colors"
+                        onClick={() => router.push(`/admin/invoices/${inv.id}`)}
+                      >
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium">{inv.number}</p>
+                          <Badge variant={INVOICE_STATUS_VARIANTS[inv.status] ?? 'outline'} className="text-[9px] mt-0.5">
+                            {INVOICE_STATUS_LABELS[inv.status]}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <p className="text-xs font-semibold">{formatCurrency(inv.total)}</p>
+                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Previous tickets */}
+          {ticket.client && clientTickets.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <HeadphonesIcon className="h-4 w-4" /> Tickets anteriores
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-1.5">
+                  {clientTickets.slice(0, 5).map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-start justify-between cursor-pointer rounded-lg px-2 py-1.5 hover:bg-muted/50 transition-colors"
+                      onClick={() => router.push(`/admin/support/${t.id}`)}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium truncate">#{t.number} {t.subject}</p>
+                        <Badge
+                          variant={STATUS_VARIANTS[t.status] ?? 'outline'}
+                          className="text-[9px] mt-0.5"
+                        >
+                          {TICKET_STATUS_LABELS[t.status]}
+                        </Badge>
+                      </div>
+                      <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground mt-1 ml-2" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Overdue alert */}
+          {pendingInvoices.some((i) => i.status === 'OVERDUE') && (
+            <div className="flex items-start gap-2 rounded-xl border border-danger/30 bg-danger/5 p-3 text-xs text-danger">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-px" />
+              <p>Este cliente tem faturas <strong>vencidas</strong>. Considere mencionar na resposta ou escalar internamente.</p>
+            </div>
           )}
 
           {/* Timestamps */}

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   ArrowLeft, CheckCircle, XCircle, FileText, CreditCard,
-  Clock, Calendar, Package, User,
+  Clock, Package, User, CircleDot,
 } from 'lucide-react'
 import {
   ordersApi, invoicesApi, Order, Invoice,
@@ -239,6 +239,99 @@ export default function OrderDetailPage() {
             </CardContent>
           </Card>
 
+          {/* Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Clock className="h-4 w-4" /> Linha do tempo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const events: { date: Date; label: string; sub?: string; variant: 'success' | 'warning' | 'danger' | 'default' }[] = []
+
+                events.push({
+                  date: new Date(order.createdAt),
+                  label: 'Pedido criado',
+                  sub: `por ${order.client?.name ?? 'cliente'}`,
+                  variant: 'default',
+                })
+
+                invoices.forEach((inv) => {
+                  events.push({
+                    date: new Date(inv.createdAt),
+                    label: `Fatura ${inv.number} gerada`,
+                    sub: formatCurrency(inv.total),
+                    variant: 'default',
+                  })
+                  if (inv.paidAt) {
+                    events.push({
+                      date: new Date(inv.paidAt),
+                      label: `Fatura ${inv.number} paga`,
+                      sub: formatCurrency(inv.total),
+                      variant: 'success',
+                    })
+                  }
+                  if (inv.status === 'OVERDUE') {
+                    events.push({
+                      date: new Date(inv.dueDate),
+                      label: `Fatura ${inv.number} venceu`,
+                      variant: 'danger',
+                    })
+                  }
+                })
+
+                if (order.activatedAt) {
+                  events.push({
+                    date: new Date(order.activatedAt),
+                    label: 'Pedido ativado',
+                    sub: 'Serviço iniciado',
+                    variant: 'success',
+                  })
+                }
+
+                if (order.cancelledAt) {
+                  events.push({
+                    date: new Date(order.cancelledAt),
+                    label: 'Pedido cancelado',
+                    variant: 'danger',
+                  })
+                }
+
+                events.sort((a, b) => a.date.getTime() - b.date.getTime())
+
+                const colorMap = {
+                  success: 'bg-success text-white',
+                  warning: 'bg-warning text-white',
+                  danger: 'bg-danger text-white',
+                  default: 'bg-muted-foreground/20 text-muted-foreground',
+                }
+
+                return (
+                  <div className="relative">
+                    <div className="absolute left-3.5 top-0 h-full w-px bg-border" />
+                    <div className="flex flex-col gap-4">
+                      {events.map((ev, i) => (
+                        <div key={i} className="flex items-start gap-3 pl-8 relative">
+                          <div className={`absolute left-0 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${colorMap[ev.variant]}`}>
+                            <CircleDot className="h-3.5 w-3.5" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{ev.label}</p>
+                            {ev.sub && <p className="text-xs text-muted-foreground">{ev.sub}</p>}
+                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                              {ev.date.toLocaleString('pt-BR')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+            </CardContent>
+          </Card>
+
           {/* Notes */}
           {order.notes && (
             <Card>
@@ -272,33 +365,6 @@ export default function OrderDetailPage() {
               >
                 Ver perfil
               </Button>
-            </CardContent>
-          </Card>
-
-          {/* Dates */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Calendar className="h-4 w-4" /> Datas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground">Criado em</p>
-                <p className="text-sm">{new Date(order.createdAt).toLocaleString('pt-BR')}</p>
-              </div>
-              {order.activatedAt && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Ativado em</p>
-                  <p className="text-sm">{new Date(order.activatedAt).toLocaleString('pt-BR')}</p>
-                </div>
-              )}
-              {order.cancelledAt && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Cancelado em</p>
-                  <p className="text-sm">{new Date(order.cancelledAt).toLocaleString('pt-BR')}</p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
