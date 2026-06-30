@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
   RefreshCw, MoreHorizontal, Play, Pause, XCircle,
   Clock, CheckCircle, AlertTriangle, TrendingUp,
@@ -33,49 +34,45 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
 
 export default function SubscriptionsPage() {
   const router = useRouter()
-  const [subs, setSubs] = useState<Subscription[]>([])
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
-  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
 
-  const fetchSubs = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await subscriptionsApi.list({ status: status || undefined, page, limit: 20 })
-      setSubs(res.data ?? res)
-      if (res.total !== undefined) setMeta(res)
-    } catch {
-      //
-    } finally {
-      setLoading(false)
-    }
-  }, [status, page])
+  const { data: res, isFetching, refetch } = useQuery({
+    queryKey: ['admin', 'subscriptions', { status, page }],
+    queryFn: () => subscriptionsApi.list({ status: status || undefined, page, limit: 20 }),
+    placeholderData: keepPreviousData,
+  })
 
-  useEffect(() => { fetchSubs() }, [fetchSubs])
+  const subs: Subscription[] = res?.data ?? []
+  const meta = {
+    total: res?.total ?? 0,
+    page: res?.page ?? 1,
+    limit: res?.limit ?? 20,
+    totalPages: res?.totalPages ?? 1,
+  }
 
   async function handleSuspend(id: string) {
     if (!confirm('Suspender esta assinatura?')) return
     await subscriptionsApi.suspend(id)
-    fetchSubs()
+    refetch()
   }
 
   async function handleReactivate(id: string) {
     if (!confirm('Reativar esta assinatura?')) return
     await subscriptionsApi.reactivate(id)
-    fetchSubs()
+    refetch()
   }
 
   async function handleCancel(id: string) {
     if (!confirm('Cancelar esta assinatura imediatamente?')) return
     await subscriptionsApi.cancel(id, false)
-    fetchSubs()
+    refetch()
   }
 
   async function handleCancelAtEnd(id: string) {
     if (!confirm('Cancelar ao final do período atual? O cliente mantém acesso até o vencimento.')) return
     await subscriptionsApi.cancel(id, true)
-    fetchSubs()
+    refetch()
   }
 
   const active = subs.filter((s) => s.status === 'ACTIVE').length
@@ -262,7 +259,7 @@ export default function SubscriptionsPage() {
             <SelectItem value="CANCELLED">Cancelada</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="icon" onClick={() => fetchSubs()} title="Atualizar">
+        <Button variant="ghost" size="icon" onClick={() => refetch()} title="Atualizar">
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -272,7 +269,7 @@ export default function SubscriptionsPage() {
         <DataTable
           columns={columns}
           data={subs}
-          loading={loading}
+          loading={isFetching}
           onRowClick={(row) => router.push(`/admin/orders/${row.orderId}`)}
           emptyState={
             <EmptyState

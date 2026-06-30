@@ -1,7 +1,9 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { useDebounce } from '@/hooks/use-debounce'
 import {
   Package, Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RefreshCw, Tag,
 } from 'lucide-react'
@@ -30,10 +32,6 @@ const TYPE_ICONS: Record<string, string> = {
 
 export default function ProductsPage() {
   const router = useRouter()
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<ProductCategory[]>([])
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [categoryId, setCategoryId] = useState('')
@@ -41,25 +39,30 @@ export default function ProductsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | undefined>()
 
-  const fetchData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [prodRes, catRes] = await Promise.all([
-        productsApi.list({ search: search || undefined, status: status || undefined, categoryId: categoryId || undefined, page, limit: 20 }),
-        productsApi.listCategories(),
-      ])
-      setProducts(prodRes.data ?? [])
-      if (prodRes.meta) setMeta(prodRes.meta)
-      setCategories(catRes.data ?? catRes)
-    } finally {
-      setLoading(false)
-    }
-  }, [search, status, categoryId, page])
+  const debouncedSearch = useDebounce(search, 400)
 
-  useEffect(() => {
-    const t = setTimeout(fetchData, search ? 400 : 0)
-    return () => clearTimeout(t)
-  }, [fetchData, search])
+  const { data: prodRes, isFetching, refetch } = useQuery({
+    queryKey: ['admin', 'products', { search: debouncedSearch, status, categoryId, page }],
+    queryFn: () => productsApi.list({
+      search: debouncedSearch || undefined,
+      status: status || undefined,
+      categoryId: categoryId || undefined,
+      page,
+      limit: 20,
+    }),
+    placeholderData: keepPreviousData,
+  })
+
+  const products: Product[] = prodRes?.data ?? []
+  const meta = prodRes?.meta ?? { total: 0, page: 1, limit: 20, totalPages: 1 }
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['admin', 'product-categories'],
+    queryFn: async (): Promise<ProductCategory[]> => {
+      const catRes = await productsApi.listCategories()
+      return catRes.data ?? catRes
+    },
+  })
 
   function handleEdit(p: Product) { setEditingProduct(p); setDrawerOpen(true) }
   function handleNew() { setEditingProduct(undefined); setDrawerOpen(true) }
@@ -67,7 +70,7 @@ export default function ProductsPage() {
   async function handleDelete(p: Product) {
     if (!confirm(`Excluir produto "${p.name}"?`)) return
     await productsApi.delete(p.id)
-    fetchData()
+    refetch()
   }
 
   const columns: Column<Product>[] = [
@@ -188,7 +191,7 @@ export default function ProductsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="icon" onClick={() => fetchData()}>
+        <Button variant="ghost" size="icon" onClick={() => refetch()}>
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -197,7 +200,7 @@ export default function ProductsPage() {
         <DataTable
           columns={columns}
           data={products}
-          loading={loading}
+          loading={isFetching}
           onRowClick={(row) => router.push(`/admin/products/${row.id}`)}
           emptyState={
             <EmptyState
@@ -216,7 +219,7 @@ export default function ProductsPage() {
       <ProductFormDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onSuccess={() => { setDrawerOpen(false); fetchData() }}
+        onSuccess={() => { setDrawerOpen(false); refetch() }}
         product={editingProduct}
         categories={categories}
       />

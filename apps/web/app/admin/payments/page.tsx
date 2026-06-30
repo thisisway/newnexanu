@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
   CreditCard, RefreshCw, MoreHorizontal, CheckCircle, Eye,
   TrendingUp, Clock, AlertTriangle,
@@ -43,32 +44,28 @@ const STATUS_LABELS: Record<Payment['status'], string> = {
 
 export default function PaymentsPage() {
   const router = useRouter()
-  const [payments, setPayments] = useState<Payment[]>([])
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
-  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
 
-  const fetchPayments = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await paymentsApi.list({ status: status || undefined, page, limit: 20 })
-      setPayments(res.data ?? res)
-      if (res.total !== undefined) setMeta(res)
-    } catch {
-      //
-    } finally {
-      setLoading(false)
-    }
-  }, [status, page])
+  const { data: res, isFetching, refetch } = useQuery({
+    queryKey: ['admin', 'payments', { status, page }],
+    queryFn: () => paymentsApi.list({ status: status || undefined, page, limit: 20 }),
+    placeholderData: keepPreviousData,
+  })
 
-  useEffect(() => { fetchPayments() }, [fetchPayments])
+  const payments: Payment[] = res?.data ?? []
+  const meta = {
+    total: res?.total ?? 0,
+    page: res?.page ?? 1,
+    limit: res?.limit ?? 20,
+    totalPages: res?.totalPages ?? 1,
+  }
 
   async function handleConfirm(id: string) {
     if (!confirm('Confirmar este pagamento? A fatura será marcada como paga e o pedido ativado.')) return
     try {
       await paymentsApi.confirm(id)
-      fetchPayments()
+      refetch()
     } catch (e: any) {
       alert(e?.response?.data?.message ?? 'Erro ao confirmar pagamento.')
     }
@@ -238,7 +235,7 @@ export default function PaymentsPage() {
             <SelectItem value="CHARGEBACK">Chargeback</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="icon" onClick={() => fetchPayments()} title="Atualizar">
+        <Button variant="ghost" size="icon" onClick={() => refetch()} title="Atualizar">
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -248,7 +245,7 @@ export default function PaymentsPage() {
         <DataTable
           columns={columns}
           data={payments}
-          loading={loading}
+          loading={isFetching}
           emptyState={
             <EmptyState
               icon={CreditCard}

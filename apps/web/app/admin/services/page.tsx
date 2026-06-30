@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
   Server, RefreshCw, Eye, Pause, Play, XCircle, Search, SlidersHorizontal,
 } from 'lucide-react'
@@ -53,34 +54,39 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ServicesPage() {
   const router = useRouter()
-  const [services, setServices] = useState<Service[]>([])
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
-  const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
   const [status, setStatus] = useState('')
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [page, setPage] = useState(1)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
+  const { data: res, isFetching, refetch } = useQuery({
+    queryKey: ['admin', 'services', { status, search, page }],
+    queryFn: async () => {
       const params = new URLSearchParams({ page: String(page), limit: '20' })
       if (status) params.set('status', status)
       if (search) params.set('search', search)
-      const [res, statsRes] = await Promise.all([
-        api.get(`/admin/services?${params}`),
-        stats === null ? api.get('/admin/services/stats') : Promise.resolve(null),
-      ])
-      setServices(res.data.data ?? [])
-      setMeta({ total: res.data.total, page: res.data.page, limit: res.data.limit, totalPages: res.data.totalPages })
-      if (statsRes) setStats(statsRes.data?.data ?? statsRes.data)
-    } catch { /* noop */ }
-    finally { setLoading(false) }
-  }, [page, status, search])
+      const r = await api.get(`/admin/services?${params}`)
+      return r.data
+    },
+    placeholderData: keepPreviousData,
+  })
 
-  useEffect(() => { load() }, [load])
+  const services: Service[] = res?.data ?? []
+  const meta = {
+    total: res?.total ?? 0,
+    page: res?.page ?? 1,
+    limit: res?.limit ?? 20,
+    totalPages: res?.totalPages ?? 1,
+  }
+
+  const { data: stats, refetch: refetchStats } = useQuery({
+    queryKey: ['admin', 'services', 'stats'],
+    queryFn: async (): Promise<Stats> => {
+      const r = await api.get('/admin/services/stats')
+      return r.data?.data ?? r.data
+    },
+  })
 
   async function handleAction(svcId: string, action: 'suspend' | 'reactivate' | 'cancel') {
     const messages = {
@@ -92,9 +98,8 @@ export default function ServicesPage() {
     setActing(svcId)
     try {
       await api.post(`/admin/services/${svcId}/${action}`)
-      await load()
-      const statsRes = await api.get('/admin/services/stats')
-      setStats(statsRes.data?.data ?? statsRes.data)
+      await refetch()
+      refetchStats()
     } catch { /* noop */ }
     finally { setActing(null) }
   }
@@ -223,7 +228,7 @@ export default function ServicesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {loading && !stats ? (
+        {!stats ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-20 rounded-2xl" />
           ))
@@ -277,7 +282,7 @@ export default function ServicesPage() {
               variant="outline"
               size="sm"
               className="rounded-xl"
-              onClick={() => { setSearch(searchInput); setPage(1); load() }}
+              onClick={() => { setSearch(searchInput); setPage(1); refetch() }}
             >
               <RefreshCw className="h-3.5 w-3.5" />
             </Button>
@@ -286,21 +291,21 @@ export default function ServicesPage() {
       </Card>
 
       {/* Table */}
-      {loading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 rounded-2xl" />
-          ))}
-        </div>
-      ) : services.length === 0 ? (
-        <EmptyState
-          icon={Server}
-          title="Nenhum serviço encontrado"
-          description="Os serviços aparecem aqui após a ativação de pedidos."
+      <div>
+        <DataTable
+          data={services}
+          columns={columns}
+          loading={isFetching}
+          onRowClick={(s) => router.push(`/admin/services/${s.id}`)}
+          emptyState={
+            <EmptyState
+              icon={Server}
+              title="Nenhum serviço encontrado"
+              description="Os serviços aparecem aqui após a ativação de pedidos."
+            />
+          }
         />
-      ) : (
-        <>
-          <DataTable data={services} columns={columns} onRowClick={(s) => router.push(`/admin/services/${s.id}`)} />
+        {meta.total > 0 && (
           <Pagination
             page={meta.page}
             totalPages={meta.totalPages}
@@ -308,8 +313,8 @@ export default function ServicesPage() {
             limit={meta.limit}
             onPageChange={setPage}
           />
-        </>
-      )}
+        )}
+      </div>
     </div>
   )
 }

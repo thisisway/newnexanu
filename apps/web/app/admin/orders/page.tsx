@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import {
   ShoppingCart, RefreshCw, Eye, CheckCircle, XCircle,
   Clock, AlertTriangle, TrendingUp, Plus,
@@ -34,39 +35,35 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
 function OrdersPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [orders, setOrders] = useState<Order[]>([])
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
-  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState(searchParams.get('status') ?? '')
   const [clientId] = useState(searchParams.get('clientId') ?? '')
   const [page, setPage] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const fetchOrders = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await ordersApi.list({ status: status || undefined, clientId: clientId || undefined, page, limit: 20 })
-      setOrders(res.data ?? res)
-      if (res.total !== undefined) setMeta(res)
-    } catch {
-      //
-    } finally {
-      setLoading(false)
-    }
-  }, [status, clientId, page])
+  const { data: res, isFetching, refetch } = useQuery({
+    queryKey: ['admin', 'orders', { status, clientId, page }],
+    queryFn: () => ordersApi.list({ status: status || undefined, clientId: clientId || undefined, page, limit: 20 }),
+    placeholderData: keepPreviousData,
+  })
 
-  useEffect(() => { fetchOrders() }, [fetchOrders])
+  const orders: Order[] = res?.data ?? []
+  const meta = {
+    total: res?.total ?? 0,
+    page: res?.page ?? 1,
+    limit: res?.limit ?? 20,
+    totalPages: res?.totalPages ?? 1,
+  }
 
   async function handleActivate(id: string) {
     if (!confirm('Ativar este pedido? Isso criará uma assinatura ativa para o cliente.')) return
     try { await ordersApi.activate(id) } catch { alert('Erro ao ativar pedido.') }
-    fetchOrders()
+    refetch()
   }
 
   async function handleCancel(id: string) {
     if (!confirm('Cancelar este pedido?')) return
     try { await ordersApi.cancel(id) } catch { alert('Erro ao cancelar pedido.') }
-    fetchOrders()
+    refetch()
   }
 
   const pending = orders.filter((o) => o.status === 'PENDING').length
@@ -173,7 +170,7 @@ function OrdersPageContent() {
       <OrderFormDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onSuccess={() => { setDrawerOpen(false); fetchOrders() }}
+        onSuccess={() => { setDrawerOpen(false); refetch() }}
       />
 
       {/* Header */}
@@ -253,7 +250,7 @@ function OrdersPageContent() {
             <SelectItem value="CANCELLED">Cancelado</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="icon" onClick={() => fetchOrders()} title="Atualizar">
+        <Button variant="ghost" size="icon" onClick={() => refetch()} title="Atualizar">
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -263,7 +260,7 @@ function OrdersPageContent() {
         <DataTable
           columns={columns}
           data={orders}
-          loading={loading}
+          loading={isFetching}
           onRowClick={(row) => router.push(`/admin/orders/${row.id}`)}
           emptyState={
             <EmptyState

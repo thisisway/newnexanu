@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { useDebounce } from '@/hooks/use-debounce'
 import {
   Users, Plus, Search, Filter, Building2, User,
   MoreHorizontal, Eye, Pencil, Trash2, RefreshCw,
@@ -22,9 +24,6 @@ import { ClientFormDrawer } from './components/client-form-drawer'
 
 export default function ClientsPage() {
   const router = useRouter()
-  const [clients, setClients] = useState<Client[]>([])
-  const [meta, setMeta] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 })
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [type, setType] = useState('')
@@ -32,23 +31,22 @@ export default function ClientsPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | undefined>()
 
-  const fetchClients = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await clientsApi.list({ search: search || undefined, status: status || undefined, type: type || undefined, page, limit: 20 })
-      setClients(res.data ?? [])
-      if (res.meta) setMeta(res.meta)
-    } catch {
-      // handled by interceptor
-    } finally {
-      setLoading(false)
-    }
-  }, [search, status, type, page])
+  const debouncedSearch = useDebounce(search, 400)
 
-  useEffect(() => {
-    const t = setTimeout(fetchClients, search ? 400 : 0)
-    return () => clearTimeout(t)
-  }, [fetchClients, search])
+  const { data: res, isFetching, refetch } = useQuery({
+    queryKey: ['admin', 'clients', { search: debouncedSearch, status, type, page }],
+    queryFn: () => clientsApi.list({
+      search: debouncedSearch || undefined,
+      status: status || undefined,
+      type: type || undefined,
+      page,
+      limit: 20,
+    }),
+    placeholderData: keepPreviousData,
+  })
+
+  const clients: Client[] = res?.data ?? []
+  const meta = res?.meta ?? { total: 0, page: 1, limit: 20, totalPages: 1 }
 
   function handleEdit(client: Client) {
     setEditingClient(client)
@@ -63,12 +61,12 @@ export default function ClientsPage() {
   async function handleDelete(client: Client) {
     if (!confirm(`Excluir ${client.name}? Esta ação não pode ser desfeita.`)) return
     await clientsApi.delete(client.id)
-    fetchClients()
+    refetch()
   }
 
   function handleSuccess() {
     setDrawerOpen(false)
-    fetchClients()
+    refetch()
   }
 
   const columns: Column<Client>[] = [
@@ -197,7 +195,7 @@ export default function ClientsPage() {
             <SelectItem value="COMPANY">Empresa</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="icon" onClick={() => fetchClients()} title="Atualizar">
+        <Button variant="ghost" size="icon" onClick={() => refetch()} title="Atualizar">
           <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
@@ -207,7 +205,7 @@ export default function ClientsPage() {
         <DataTable
           columns={columns}
           data={clients}
-          loading={loading}
+          loading={isFetching}
           onRowClick={(row) => router.push(`/admin/clients/${row.id}`)}
           emptyState={
             <EmptyState

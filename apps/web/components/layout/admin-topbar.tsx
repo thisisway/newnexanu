@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { Bell, Search, Sun, Moon, Menu, ShoppingCart, FileText, HeadphonesIcon, Users, X } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
@@ -54,7 +55,21 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
   const { theme, setTheme } = useTheme()
   const { user, logout } = useAuth()
   const router = useRouter()
-  const [counts, setCounts] = useState<DashboardCounts>({ pendingOrders: 0, overdueInvoices: 0, openTickets: 0 })
+
+  // Shares the same query key as the dashboard page, so the stats are fetched
+  // once and served from cache here (no duplicate request, no flicker).
+  const { data: stats } = useQuery({
+    queryKey: ['admin', 'dashboard', 'stats'],
+    queryFn: async () => {
+      const r = await api.get('/admin/stats/dashboard')
+      return r.data?.data ?? r.data
+    },
+  })
+  const counts: DashboardCounts = {
+    pendingOrders: stats?.pendingOrders ?? 0,
+    overdueInvoices: stats?.overdueInvoices ?? 0,
+    openTickets: stats?.openTickets ?? 0,
+  }
 
   // Search state
   const [query, setQuery] = useState('')
@@ -64,17 +79,6 @@ export function AdminTopbar({ onMenuToggle, className }: AdminTopbarProps) {
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    api.get('/admin/stats/dashboard').then((r) => {
-      const d = r.data?.data ?? r.data
-      setCounts({
-        pendingOrders: d?.pendingOrders ?? 0,
-        overdueInvoices: d?.overdueInvoices ?? 0,
-        openTickets: d?.openTickets ?? 0,
-      })
-    }).catch(() => {})
-  }, [])
 
   const performSearch = useCallback(async (q: string) => {
     if (q.trim().length < 2) {

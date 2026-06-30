@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import {
   Users, FileText, TrendingUp, AlertCircle,
   ShoppingCart, RefreshCcw, Clock, CheckCircle, HeadphonesIcon,
@@ -42,15 +42,13 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api.get('/admin/stats/dashboard')
-      .then((r) => setStats(r.data?.data ?? r.data))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: stats, isLoading: loading } = useQuery({
+    queryKey: ['admin', 'dashboard', 'stats'],
+    queryFn: async (): Promise<DashboardStats> => {
+      const r = await api.get('/admin/stats/dashboard')
+      return r.data?.data ?? r.data
+    },
+  })
 
   const metrics = stats
     ? [
