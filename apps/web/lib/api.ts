@@ -54,6 +54,10 @@ api.interceptors.response.use(
 
         localStorage.setItem('nexano_token', newToken)
         localStorage.setItem('nexano_refresh_token', newRefreshToken)
+        // Keep the middleware-read cookie in sync with the refreshed token,
+        // otherwise it keeps holding the previous (now stale) access token.
+        const isSecure = window.location.protocol === 'https:'
+        document.cookie = `nexano_token=${newToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${isSecure ? '; Secure' : ''}`
 
         originalRequest.headers!.Authorization = `Bearer ${newToken}`
         return api(originalRequest)

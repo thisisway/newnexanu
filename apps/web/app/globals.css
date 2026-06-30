@@ -167,6 +167,15 @@
   .animate-fade-in-up {
     animation: fadeInUp 0.25s ease-out both;
   }
+
+  .animate-progress-indeterminate {
+    animation: progressIndeterminate 1s ease-in-out infinite;
+  }
+}
+
+@keyframes progressIndeterminate {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
 }
 
 @keyframes fadeInUp {

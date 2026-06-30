@@ -29,8 +29,19 @@ export function DataTable<T>({
   onRowClick,
   className,
 }: DataTableProps<T>) {
+  // Only show skeleton rows on the very first load (no data yet). On refetches
+  // (filtering, pagination, refresh, after mutations) keep the existing rows
+  // visible and just dim them — this avoids the whole table blinking.
+  const isInitialLoading = loading && data.length === 0
+  const isRefetching = loading && data.length > 0
+
   return (
-    <div className={cn('w-full overflow-auto rounded-xl border border-border', className)}>
+    <div className={cn('relative w-full overflow-auto rounded-xl border border-border', className)}>
+      {isRefetching && (
+        <div className="absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden">
+          <div className="h-full w-1/3 animate-progress-indeterminate bg-primary/70" />
+        </div>
+      )}
       <table className="w-full caption-bottom text-sm">
         <thead>
           <tr className="border-b border-border bg-muted/30">
@@ -47,8 +58,8 @@ export function DataTable<T>({
             ))}
           </tr>
         </thead>
-        <tbody>
-          {loading ? (
+        <tbody className={cn(isRefetching && 'opacity-50 transition-opacity')}>
+          {isInitialLoading ? (
             Array.from({ length: 5 }).map((_, i) => (
               <tr key={i} className="border-b border-border last:border-0">
                 {columns.map((col) => (

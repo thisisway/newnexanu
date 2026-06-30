@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ShoppingCart, RefreshCw, Eye, CheckCircle, XCircle,
@@ -31,7 +31,7 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
   FRAUD: 'danger',
 }
 
-export default function OrdersPage() {
+function OrdersPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [orders, setOrders] = useState<Order[]>([])
@@ -284,5 +284,13 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div className="h-32 animate-pulse rounded-2xl bg-muted/40" />}>
+      <OrdersPageContent />
+    </Suspense>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   HeadphonesIcon, RefreshCw, MoreHorizontal, Clock,
@@ -35,7 +35,7 @@ const PRIORITY_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dan
   CRITICAL: 'danger',
 }
 
-export default function SupportPage() {
+function SupportPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -300,5 +300,13 @@ export default function SupportPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function SupportPage() {
+  return (
+    <Suspense fallback={<div className="h-32 animate-pulse rounded-2xl bg-muted/40" />}>
+      <SupportPageContent />
+    </Suspense>
   )
 }

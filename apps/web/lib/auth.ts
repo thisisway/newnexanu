@@ -50,9 +50,12 @@ export function persistAuth(tokens: AuthTokens) {
     localStorage.setItem('nexano_org_id', firstOrg.id)
   }
 
-  // Set cookie so Next.js middleware can read it for route protection
+  // Set cookie so Next.js middleware can read it for route protection.
+  // Use a 7-day max-age so the cookie persists across browser restarts like
+  // localStorage does — otherwise the session cookie expires on close and the
+  // middleware redirects to /login even though valid tokens are still stored.
   const isSecure = window.location.protocol === 'https:'
-  document.cookie = `nexano_token=${tokens.accessToken}; path=/; SameSite=Lax${isSecure ? '; Secure' : ''}`
+  document.cookie = `nexano_token=${tokens.accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax${isSecure ? '; Secure' : ''}`
 }
 
 export function clearAuth() {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   FileText, RefreshCw, Eye, CheckCircle, XCircle,
@@ -30,7 +30,7 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
   REFUNDED: 'outline',
 }
 
-export default function InvoicesPage() {
+function InvoicesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -269,5 +269,13 @@ export default function InvoicesPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function InvoicesPage() {
+  return (
+    <Suspense fallback={<div className="h-32 animate-pulse rounded-2xl bg-muted/40" />}>
+      <InvoicesPageContent />
+    </Suspense>
   )
 }
