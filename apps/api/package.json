@@ -8,6 +8,7 @@
     "start": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",
+    "test": "ts-node --transpile-only -r tsconfig-paths/register test/run.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
