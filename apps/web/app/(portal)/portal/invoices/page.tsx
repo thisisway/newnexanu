@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -30,8 +31,6 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'dange
 }
 
 export default function PortalInvoicesPage() {
-  const [invoices, setInvoices] = useState<PortalInvoice[]>([])
-  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState('')
   const [generating, setGenerating] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -43,25 +42,19 @@ export default function PortalInvoicesPage() {
     })
   }
 
-  const fetch = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await api.get('/portal/invoices', {
-        params: { status: status || undefined },
-      })
-      setInvoices(res.data.data ?? res.data)
-    } finally {
-      setLoading(false)
-    }
-  }, [status])
-
-  useEffect(() => { fetch() }, [fetch])
+  const { data: invoices = [], isLoading: loading, refetch } = useQuery({
+    queryKey: ['portal', 'invoices', { status }],
+    queryFn: async (): Promise<PortalInvoice[]> => {
+      const res = await api.get('/portal/invoices', { params: { status: status || undefined } })
+      return res.data.data ?? res.data
+    },
+  })
 
   async function handleGeneratePix(invoiceId: string) {
     setGenerating(invoiceId)
     try {
       await api.post('/portal/payments', { invoiceId, method: 'PIX' })
-      await fetch()
+      await refetch()
     } finally {
       setGenerating(null)
     }

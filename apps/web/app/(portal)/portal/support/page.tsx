@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { portalTicketsApi, Ticket, TICKET_STATUS_LABELS, TICKET_PRIORITY_LABELS } from '@/lib/api/tickets'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -16,14 +16,13 @@ const STATUS_VARIANTS: Record<string, 'default' | 'success' | 'warning' | 'outli
 
 export default function PortalSupportPage() {
   const router = useRouter()
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    portalTicketsApi.list()
-      .then((data) => setTickets(Array.isArray(data) ? data : data.data ?? []))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: tickets = [], isLoading: loading } = useQuery({
+    queryKey: ['portal', 'tickets'],
+    queryFn: async (): Promise<Ticket[]> => {
+      const data = await portalTicketsApi.list()
+      return Array.isArray(data) ? data : data.data ?? []
+    },
+  })
 
   return (
     <div className="flex flex-col gap-6">

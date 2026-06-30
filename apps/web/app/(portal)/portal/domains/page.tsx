@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -31,16 +31,13 @@ function daysUntil(date: string) {
 }
 
 export default function PortalDomainsPage() {
-  const [domains, setDomains] = useState<Domain[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    api.get('/portal/domains')
-      .then((r) => setDomains(r.data?.data ?? r.data ?? []))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: domains = [], isLoading: loading, isError: error } = useQuery({
+    queryKey: ['portal', 'domains'],
+    queryFn: async (): Promise<Domain[]> => {
+      const r = await api.get('/portal/domains')
+      return r.data?.data ?? r.data ?? []
+    },
+  })
 
   return (
     <div className="flex flex-col gap-6">

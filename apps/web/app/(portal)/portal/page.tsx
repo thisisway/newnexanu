@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/components/providers/auth-provider'
 import { api } from '@/lib/api'
 import { Card, CardContent } from '@/components/ui/card'
@@ -48,24 +48,29 @@ export default function PortalHomePage() {
   const { user } = useAuthStore()
   const firstName = user?.name?.split(' ')[0] || 'você'
 
-  const [data, setData] = useState<PortalDashboard | null>(null)
-  const [orders, setOrders] = useState<PortalOrder[]>([])
-  const [loading, setLoading] = useState(true)
-  const [noProfile, setNoProfile] = useState(false)
-  const [fetchError, setFetchError] = useState(false)
+  const dashboardQuery = useQuery({
+    queryKey: ['portal', 'dashboard'],
+    queryFn: async (): Promise<PortalDashboard> => {
+      const r = await api.get('/portal/dashboard')
+      return r.data?.data ?? r.data
+    },
+    retry: false, // a 404 here means "no client profile", not a transient error
+  })
 
-  useEffect(() => {
-    Promise.all([
-      api.get('/portal/dashboard'),
-      api.get('/portal/orders'),
-    ]).then(([dash, ord]) => {
-      setData(dash.data?.data ?? dash.data)
-      setOrders(ord.data?.data ?? ord.data ?? [])
-    }).catch((e) => {
-      if (e?.response?.status === 404) setNoProfile(true)
-      else setFetchError(true)
-    }).finally(() => setLoading(false))
-  }, [])
+  const ordersQuery = useQuery({
+    queryKey: ['portal', 'orders'],
+    queryFn: async (): Promise<PortalOrder[]> => {
+      const r = await api.get('/portal/orders')
+      return r.data?.data ?? r.data ?? []
+    },
+  })
+
+  const data = dashboardQuery.data
+  const orders = ordersQuery.data ?? []
+  const loading = dashboardQuery.isLoading || ordersQuery.isLoading
+  const dashErrorStatus = (dashboardQuery.error as { response?: { status?: number } } | null)?.response?.status
+  const noProfile = dashErrorStatus === 404
+  const fetchError = (dashboardQuery.isError && !noProfile) || ordersQuery.isError
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite'

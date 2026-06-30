@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { CYCLE_LABELS, formatCurrency } from '@/lib/api/orders'
 
@@ -30,16 +30,13 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function PortalServicesPage() {
   const router = useRouter()
-  const [orders, setOrders] = useState<PortalOrder[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    api.get('/portal/orders')
-      .then((r) => setOrders(Array.isArray(r.data) ? r.data : r.data.data ?? []))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: orders = [], isLoading: loading, isError: error } = useQuery({
+    queryKey: ['portal', 'orders'],
+    queryFn: async (): Promise<PortalOrder[]> => {
+      const r = await api.get('/portal/orders')
+      return Array.isArray(r.data) ? r.data : r.data.data ?? []
+    },
+  })
 
   if (loading) {
     return (
