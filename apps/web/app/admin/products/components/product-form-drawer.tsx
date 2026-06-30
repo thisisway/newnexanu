@@ -155,10 +155,13 @@ export function ProductFormDrawer({ open, onClose, onSuccess, product, categorie
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">Categoria</label>
-              <Select value={categoryIdValue ?? ''} onValueChange={(v) => setValue('categoryId', v)}>
+              <Select
+                value={categoryIdValue || 'none'}
+                onValueChange={(v) => setValue('categoryId', v === 'none' ? undefined : v)}
+              >
                 <SelectTrigger><SelectValue placeholder="Sem categoria" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sem categoria</SelectItem>
+                  <SelectItem value="none">Sem categoria</SelectItem>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}

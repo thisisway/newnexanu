@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { useDebounce } from '@/hooks/use-debounce'
 import {
-  Package, Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RefreshCw, Tag,
+  Package, Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RefreshCw, Tag, Power, PowerOff,
 } from 'lucide-react'
 import { productsApi, Product, ProductCategory, PRODUCT_TYPE_LABELS, formatCurrency } from '@/lib/api/products'
 import { Button } from '@/components/ui/button'
@@ -70,6 +70,12 @@ export default function ProductsPage() {
   async function handleDelete(p: Product) {
     if (!confirm(`Excluir produto "${p.name}"?`)) return
     await productsApi.delete(p.id)
+    refetch()
+  }
+
+  async function handleToggleStatus(p: Product) {
+    const next = p.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+    await productsApi.update(p.id, { status: next })
     refetch()
   }
 
@@ -143,6 +149,11 @@ export default function ProductsPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleEdit(row) }}>
               <Pencil className="mr-2 h-4 w-4" /> Editar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleToggleStatus(row) }}>
+              {row.status === 'ACTIVE'
+                ? <><PowerOff className="mr-2 h-4 w-4" /> Desativar</>
+                : <><Power className="mr-2 h-4 w-4" /> Ativar</>}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={(e) => { e.stopPropagation(); handleDelete(row) }}

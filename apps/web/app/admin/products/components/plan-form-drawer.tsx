@@ -50,10 +50,19 @@ interface PlanFormDrawerProps {
   productId: string
 }
 
-export function PlanFormDrawer({ open, onClose, onSuccess, plan, productId }: PlanFormDrawerProps) {
+export function PlanFormDrawer({ onClose, onSuccess, plan, productId, open }: PlanFormDrawerProps) {
   const isEdit = !!plan
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [features, setFeatures] = useState<string[]>([])
+  const [featureInput, setFeatureInput] = useState('')
+
+  function addFeature() {
+    const v = featureInput.trim()
+    if (!v) return
+    setFeatures((f) => [...f, v])
+    setFeatureInput('')
+  }
 
   const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -97,13 +106,16 @@ export function PlanFormDrawer({ open, onClose, onSuccess, plan, productId }: Pl
             isDefault: p.isDefault,
           })),
         })
+        setFeatures((plan.features as string[] | undefined) ?? [])
       } else {
         reset({
           status: 'ACTIVE',
           isPopular: false,
           prices: [{ cycle: 'MONTHLY', amount: '', setupFee: '0' }],
         })
+        setFeatures([])
       }
+      setFeatureInput('')
       setError('')
     }
   }, [open, plan, reset])
@@ -112,10 +124,11 @@ export function PlanFormDrawer({ open, onClose, onSuccess, plan, productId }: Pl
     setLoading(true)
     setError('')
     try {
+      const payload = { ...data, features }
       if (isEdit) {
-        await productsApi.updatePlan(plan.id, data)
+        await productsApi.updatePlan(plan.id, payload)
       } else {
-        await productsApi.createPlan({ ...data, productId })
+        await productsApi.createPlan({ ...payload, productId })
       }
       onSuccess()
     } catch (e: any) {
@@ -240,6 +253,43 @@ export function PlanFormDrawer({ open, onClose, onSuccess, plan, productId }: Pl
                   <p className="text-xs text-destructive">{errors.prices.message}</p>
                 )}
               </div>
+            </div>
+
+            {/* Features / recursos */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
+                Recursos do plano
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  className="h-9 text-sm"
+                  placeholder="Ex.: 10 GB SSD NVMe"
+                  value={featureInput}
+                  onChange={(e) => setFeatureInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature() } }}
+                />
+                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={addFeature}>
+                  <Plus className="mr-1 h-3.5 w-3.5" /> Adicionar
+                </Button>
+              </div>
+              {features.length > 0 && (
+                <ul className="mt-3 flex flex-col gap-1.5">
+                  {features.map((f, i) => (
+                    <li key={`${f}-${i}`} className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-1.5">
+                      <span className="flex items-center gap-2 text-sm text-foreground">
+                        <span className="text-primary">✓</span> {f}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFeatures((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             {error && (

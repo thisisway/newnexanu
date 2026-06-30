@@ -133,3 +133,14 @@ test('removePrice refuses to delete a price referenced by orders', async () => {
     /pedidos/i,
   )
 })
+
+test('createAddon normalizes comma money before persisting', async () => {
+  let captured: any
+  const prisma = makePrisma({
+    addon: { create: async (arg: any) => { captured = arg.data; return { id: 'addon1', ...arg.data } } },
+  })
+  const svc = new PlansService(prisma, audit as any)
+  await svc.createAddon('org1', 'user1', { name: 'Backup', type: 'RECURRING', price: '19,90', setupFee: '5,00' } as any)
+  assert.equal(captured.price, '19.90')
+  assert.equal(captured.setupFee, '5.00')
+})
