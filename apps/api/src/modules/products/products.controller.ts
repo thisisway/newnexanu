@@ -3,6 +3,7 @@ import { ProductsService } from './products.service'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { CreateCategoryDto } from './dto/create-category.dto'
+import { CreateConfigurableOptionDto, UpdateConfigurableOptionDto } from './dto/configurable-option.dto'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { CurrentOrg } from '../../common/decorators/current-org.decorator'
 import { RequirePermissions } from '../../common/decorators/permissions.decorator'
@@ -68,6 +69,38 @@ export class ProductsController {
   @RequirePermissions('products:delete')
   remove(@CurrentOrg() orgId: string, @CurrentUser() user: any, @Param('id') id: string) {
     return this.productsService.remove(orgId, user.sub, id)
+  }
+
+  @Post(':id/duplicate')
+  @RequirePermissions('products:create')
+  duplicate(@CurrentOrg() orgId: string, @CurrentUser() user: any, @Param('id') id: string) {
+    return this.productsService.duplicate(orgId, user.sub, id)
+  }
+
+  // ─── Configurable Options ────────────────────────────────────────────────
+
+  @Get(':id/options')
+  @RequirePermissions('products:read')
+  listOptions(@CurrentOrg() orgId: string, @Param('id') productId: string) {
+    return this.productsService.listOptions(orgId, productId)
+  }
+
+  @Post(':id/options')
+  @RequirePermissions('products:update')
+  createOption(@CurrentOrg() orgId: string, @CurrentUser() user: any, @Param('id') productId: string, @Body() dto: CreateConfigurableOptionDto) {
+    return this.productsService.createOption(orgId, user.sub, productId, dto)
+  }
+
+  @Patch('options/:optionId')
+  @RequirePermissions('products:update')
+  updateOption(@CurrentOrg() orgId: string, @CurrentUser() user: any, @Param('optionId') optionId: string, @Body() dto: UpdateConfigurableOptionDto) {
+    return this.productsService.updateOption(orgId, user.sub, optionId, dto)
+  }
+
+  @Delete('options/:optionId')
+  @RequirePermissions('products:delete')
+  removeOption(@CurrentOrg() orgId: string, @CurrentUser() user: any, @Param('optionId') optionId: string) {
+    return this.productsService.removeOption(orgId, user.sub, optionId)
   }
 }
 

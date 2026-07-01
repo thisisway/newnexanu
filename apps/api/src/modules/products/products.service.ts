@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
 import { PrismaService } from '../prisma/prisma.service'
 import { AuditService } from '../audit/audit.service'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { CreateCategoryDto } from './dto/create-category.dto'
+import { CreateConfigurableOptionDto, UpdateConfigurableOptionDto } from './dto/configurable-option.dto'
+import { parseSignedMoney } from '../../common/utils/money'
 
 @Injectable()
 export class ProductsService {
@@ -149,5 +152,180 @@ export class ProductsService {
     const product = await this.findOne(organizationId, id)
     await this.prisma.product.delete({ where: { id } })
     await this.audit.log({ organizationId, userId, action: 'product.deleted', entity: 'product', entityId: id, before: product, severity: 'WARNING' })
+  }
+
+  /**
+   * Deep-clones a product with all of its plans and prices. The copy starts
+   * INACTIVE so it isn't sold before it has been reviewed, and gets fresh
+   * organization-unique slugs.
+   */
+  async duplicate(organizationId: string, userId: string, id: string) {
+    const source = await this.prisma.product.findFirst({
+      where: { id, organizationId },
+      include: { plans: { include: { prices: true } } },
+    })
+    if (!source) throw new NotFoundException('Produto não encontrado')
+
+    const productSlug = await this.uniqueSlug(
+      (slug) => this.prisma.product.findUnique({ where: { organizationId_slug: { organizationId, slug } } }).then(Boolean),
+      source.slug,
+    )
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({
+        data: {
+          organizationId,
+          categoryId: source.categoryId,
+          name: `${source.name} (cópia)`,
+          slug: productSlug,
+          description: source.description,
+          type: source.type,
+          status: 'INACTIVE',
+          features: source.features ?? Prisma.JsonNull,
+          metadata: source.metadata ?? {},
+          sortOrder: source.sortOrder,
+        },
+      })
+
+      for (const plan of source.plans) {
+        const planSlug = await this.uniqueSlug(
+          (slug) => tx.plan.findUnique({ where: { organizationId_slug: { organizationId, slug } } }).then(Boolean),
+          plan.slug,
+        )
+        await tx.plan.create({
+          data: {
+            organizationId,
+            productId: product.id,
+            name: plan.name,
+            slug: planSlug,
+            description: plan.description,
+            status: plan.status,
+            features: plan.features ?? Prisma.JsonNull,
+            limits: plan.limits ?? Prisma.JsonNull,
+            metadata: plan.metadata ?? {},
+            sortOrder: plan.sortOrder,
+            isPopular: plan.isPopular,
+            prices: {
+              create: plan.prices.map((pr) => ({
+                currency: pr.currency,
+                cycle: pr.cycle,
+                amount: pr.amount,
+                setupFee: pr.setupFee,
+                trialDays: pr.trialDays,
+                isDefault: pr.isDefault,
+              })),
+            },
+          },
+        })
+      }
+
+      return product
+    })
+
+    await this.audit.log({ organizationId, userId, action: 'product.duplicated', entity: 'product', entityId: created.id, after: created })
+    return this.findOne(organizationId, created.id)
+  }
+
+  /** Finds a free "<base>-copia" / "<base>-copia-N" slug given an existence check. */
+  private async uniqueSlug(exists: (slug: string) => Promise<boolean>, base: string): Promise<string> {
+    let candidate = `${base}-copia`
+    let i = 2
+    while (await exists(candidate)) {
+      candidate = `${base}-copia-${i}`
+      i++
+    }
+    return candidate
+  }
+
+  // ─── Configurable Options ──────────────────────────────────────────────────
+
+  private async assertProduct(organizationId: string, productId: string) {
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, organizationId },
+      select: { id: true },
+    })
+    if (!product) throw new NotFoundException('Produto não encontrado')
+    return product
+  }
+
+  private mapOptionValues(organizationId: string, values?: { label: string; priceModifier?: string; sortOrder?: number }[]) {
+    return (values ?? []).map((v, i) => ({
+      organizationId,
+      label: v.label,
+      priceModifier: parseSignedMoney(v.priceModifier ?? '0', 'ajuste de preço'),
+      sortOrder: v.sortOrder ?? i,
+    }))
+  }
+
+  async listOptions(organizationId: string, productId: string) {
+    await this.assertProduct(organizationId, productId)
+    return this.prisma.configurableOption.findMany({
+      where: { organizationId, productId },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+      include: { values: { orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }] } },
+    })
+  }
+
+  async createOption(organizationId: string, userId: string, productId: string, dto: CreateConfigurableOptionDto) {
+    await this.assertProduct(organizationId, productId)
+    const values = this.mapOptionValues(organizationId, dto.values)
+
+    const option = await this.prisma.configurableOption.create({
+      data: {
+        organizationId,
+        productId,
+        name: dto.name,
+        type: dto.type ?? 'SELECT',
+        required: dto.required ?? false,
+        sortOrder: dto.sortOrder ?? 0,
+        status: dto.status ?? 'ACTIVE',
+        ...(values.length && { values: { create: values } }),
+      },
+      include: { values: { orderBy: { sortOrder: 'asc' } } },
+    })
+
+    await this.audit.log({ organizationId, userId, action: 'option.created', entity: 'configurable_option', entityId: option.id, after: option })
+    return option
+  }
+
+  async updateOption(organizationId: string, userId: string, optionId: string, dto: UpdateConfigurableOptionDto) {
+    const option = await this.prisma.configurableOption.findFirst({ where: { id: optionId, organizationId } })
+    if (!option) throw new NotFoundException('Opção não encontrada')
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.configurableOption.update({
+        where: { id: optionId },
+        data: {
+          ...(dto.name !== undefined && { name: dto.name }),
+          ...(dto.type !== undefined && { type: dto.type }),
+          ...(dto.required !== undefined && { required: dto.required }),
+          ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+          ...(dto.status !== undefined && { status: dto.status }),
+        },
+      })
+
+      if (dto.values !== undefined) {
+        // Options aren't referenced by orders yet, so replacing the value set
+        // wholesale keeps the code simple and predictable.
+        await tx.configurableOptionValue.deleteMany({ where: { optionId } })
+        const values = this.mapOptionValues(organizationId, dto.values)
+        if (values.length) {
+          await tx.configurableOptionValue.createMany({ data: values.map((v) => ({ ...v, optionId })) })
+        }
+      }
+    })
+
+    await this.audit.log({ organizationId, userId, action: 'option.updated', entity: 'configurable_option', entityId: optionId, before: option })
+    return this.prisma.configurableOption.findFirst({
+      where: { id: optionId },
+      include: { values: { orderBy: { sortOrder: 'asc' } } },
+    })
+  }
+
+  async removeOption(organizationId: string, userId: string, optionId: string) {
+    const option = await this.prisma.configurableOption.findFirst({ where: { id: optionId, organizationId } })
+    if (!option) throw new NotFoundException('Opção não encontrada')
+    await this.prisma.configurableOption.delete({ where: { id: optionId } })
+    await this.audit.log({ organizationId, userId, action: 'option.deleted', entity: 'configurable_option', entityId: optionId, before: option, severity: 'WARNING' })
   }
 }

@@ -31,3 +31,15 @@ export function parseMoney(value: unknown, field = 'valor'): string {
   }
   return normalized
 }
+
+/**
+ * Like parseMoney but allows negative values — used for things like option
+ * price modifiers, which can add to or subtract from the base price.
+ */
+export function parseSignedMoney(value: unknown, field = 'valor'): string {
+  const normalized = normalizeMoney(value)
+  if (normalized === '' || Number.isNaN(Number(normalized))) {
+    throw new BadRequestException(`O ${field} informado é inválido.`)
+  }
+  return normalized
+}

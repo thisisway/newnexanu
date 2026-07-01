@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { useDebounce } from '@/hooks/use-debounce'
 import {
-  Package, Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RefreshCw, Tag, Power, PowerOff,
+  Package, Plus, Search, MoreHorizontal, Eye, Pencil, Trash2, RefreshCw, Tag, Power, PowerOff, Copy,
 } from 'lucide-react'
 import { productsApi, Product, ProductCategory, PRODUCT_TYPE_LABELS, formatCurrency } from '@/lib/api/products'
 import { Button } from '@/components/ui/button'
@@ -76,6 +76,11 @@ export default function ProductsPage() {
   async function handleToggleStatus(p: Product) {
     const next = p.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
     await productsApi.update(p.id, { status: next })
+    refetch()
+  }
+
+  async function handleDuplicate(p: Product) {
+    await productsApi.duplicate(p.id)
     refetch()
   }
 
@@ -154,6 +159,9 @@ export default function ProductsPage() {
               {row.status === 'ACTIVE'
                 ? <><PowerOff className="mr-2 h-4 w-4" /> Desativar</>
                 : <><Power className="mr-2 h-4 w-4" /> Ativar</>}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDuplicate(row) }}>
+              <Copy className="mr-2 h-4 w-4" /> Duplicar
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={(e) => { e.stopPropagation(); handleDelete(row) }}

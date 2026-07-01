@@ -4,11 +4,11 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft, Plus, Pencil, Trash2, Star, MoreHorizontal,
-  Power, PowerOff, Puzzle, Server,
+  Power, PowerOff, Puzzle, Server, SlidersHorizontal,
 } from 'lucide-react'
 import {
-  productsApi, Product, Plan, Addon, ProductCategory,
-  CYCLE_LABELS, PRODUCT_TYPE_LABELS, formatCurrency,
+  productsApi, Product, Plan, Addon, ConfigurableOption, ProductCategory,
+  CYCLE_LABELS, PRODUCT_TYPE_LABELS, OPTION_TYPE_LABELS, formatCurrency,
 } from '@/lib/api/products'
 import { Button } from '@/components/ui/button'
 import { Badge, StatusBadge } from '@/components/ui/badge'
@@ -20,9 +20,10 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { ProductFormDrawer } from '../components/product-form-drawer'
 import { PlanFormDrawer } from '../components/plan-form-drawer'
 import { AddonFormDrawer } from '../components/addon-form-drawer'
+import { OptionFormDrawer } from '../components/option-form-drawer'
 import { cn } from '@/lib/utils'
 
-type Tab = 'plans' | 'addons'
+type Tab = 'plans' | 'addons' | 'options'
 
 const ADDON_TYPE_LABELS: Record<string, string> = { RECURRING: 'Recorrente', ONE_TIME: 'Único' }
 
@@ -32,6 +33,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [addons, setAddons] = useState<Addon[]>([])
+  const [options, setOptions] = useState<ConfigurableOption[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('plans')
   const [editProductOpen, setEditProductOpen] = useState(false)
@@ -39,6 +41,8 @@ export default function ProductDetailPage() {
   const [editingPlan, setEditingPlan] = useState<Plan | undefined>()
   const [addonDrawerOpen, setAddonDrawerOpen] = useState(false)
   const [editingAddon, setEditingAddon] = useState<Addon | undefined>()
+  const [optionDrawerOpen, setOptionDrawerOpen] = useState(false)
+  const [editingOption, setEditingOption] = useState<ConfigurableOption | undefined>()
 
   useEffect(() => {
     load()
@@ -53,8 +57,12 @@ export default function ProductDetailPage() {
       setProduct(prod)
       // Add-ons that are global or attached to one of this product's plans.
       const planIds = new Set((prod.plans ?? []).map((p) => p.id))
-      const allAddons = await productsApi.listAddons().then((r) => r.data ?? r).catch(() => [])
+      const [allAddons, opts] = await Promise.all([
+        productsApi.listAddons().then((r) => r.data ?? r).catch(() => []),
+        productsApi.listOptions(id).then((r) => r.data ?? r).catch(() => []),
+      ])
       setAddons((allAddons as Addon[]).filter((a) => !a.planId || planIds.has(a.planId)))
+      setOptions(opts as ConfigurableOption[])
     } finally {
       setLoading(false)
     }
@@ -95,6 +103,20 @@ export default function ProductDetailPage() {
   async function handleDeleteAddon(addon: Addon) {
     if (!confirm(`Excluir add-on "${addon.name}"?`)) return
     await productsApi.deleteAddon(addon.id)
+    load()
+  }
+
+  function handleNewOption() {
+    setEditingOption(undefined)
+    setOptionDrawerOpen(true)
+  }
+  function handleEditOption(option: ConfigurableOption) {
+    setEditingOption(option)
+    setOptionDrawerOpen(true)
+  }
+  async function handleDeleteOption(option: ConfigurableOption) {
+    if (!confirm(`Excluir opção "${option.name}"?`)) return
+    await productsApi.deleteOption(option.id)
     load()
   }
 
@@ -146,7 +168,7 @@ export default function ProductDetailPage() {
 
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-border">
-        {([['plans', `Planos (${plans.length})`], ['addons', `Add-ons (${addons.length})`]] as const).map(([key, label]) => (
+        {([['plans', `Planos (${plans.length})`], ['addons', `Add-ons (${addons.length})`], ['options', `Opções (${options.length})`]] as const).map(([key, label]) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -331,6 +353,72 @@ export default function ProductDetailPage() {
         </div>
       )}
 
+      {/* ── Options tab ────────────────────────────────────────────────────── */}
+      {tab === 'options' && (
+        <div className="rounded-xl border border-border bg-card">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">Opções configuráveis</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Personalizações que o cliente escolhe ao contratar (ex.: localização, painel, recursos extras).</p>
+            </div>
+            <Button size="sm" onClick={handleNewOption}>
+              <Plus className="mr-2 h-4 w-4" /> Nova opção
+            </Button>
+          </div>
+
+          {options.length === 0 ? (
+            <EmptyState
+              icon={SlidersHorizontal}
+              title="Nenhuma opção configurável"
+              description="Crie campos como localização do servidor, painel de controle ou recursos extras com ajuste de preço."
+              actions={[{ label: 'Criar opção', onClick: handleNewOption }]}
+            />
+          ) : (
+            <div className="divide-y divide-border">
+              {options.map((option) => (
+                <div key={option.id} className="flex items-start justify-between gap-4 px-5 py-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-foreground">{option.name}</p>
+                      <Badge variant="outline" className="text-[10px]">{OPTION_TYPE_LABELS[option.type] ?? option.type}</Badge>
+                      {option.required && <Badge variant="secondary" className="text-[10px]">Obrigatório</Badge>}
+                      <StatusBadge status={option.status} />
+                    </div>
+                    {option.values.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {option.values.map((v) => (
+                          <span key={v.id} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+                            {v.label}
+                            {Number(v.priceModifier) !== 0 && (
+                              <span className={Number(v.priceModifier) > 0 ? 'text-foreground' : 'text-success'}>
+                                {Number(v.priceModifier) > 0 ? '+' : ''}{formatCurrency(v.priceModifier)}
+                              </span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon-sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditOption(option)}>
+                        <Pencil className="mr-2 h-4 w-4" /> Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteOption(option)} className="text-destructive focus:text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Drawers */}
       <ProductFormDrawer
         open={editProductOpen}
@@ -354,6 +442,14 @@ export default function ProductDetailPage() {
         onSuccess={() => { setAddonDrawerOpen(false); load() }}
         addon={editingAddon}
         plans={plans}
+      />
+
+      <OptionFormDrawer
+        open={optionDrawerOpen}
+        onClose={() => setOptionDrawerOpen(false)}
+        onSuccess={() => { setOptionDrawerOpen(false); load() }}
+        option={editingOption}
+        productId={product.id}
       />
     </div>
   )

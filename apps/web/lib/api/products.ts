@@ -77,6 +77,42 @@ export interface Addon {
   status: 'ACTIVE' | 'INACTIVE'
 }
 
+export interface ConfigurableOptionValue {
+  id: string
+  optionId: string
+  label: string
+  priceModifier: string
+  sortOrder: number
+}
+
+export interface ConfigurableOption {
+  id: string
+  productId: string
+  name: string
+  type: 'SELECT' | 'RADIO' | 'CHECKBOX' | 'NUMBER' | 'TEXT'
+  required: boolean
+  sortOrder: number
+  status: 'ACTIVE' | 'INACTIVE'
+  values: ConfigurableOptionValue[]
+}
+
+export interface ConfigurableOptionInput {
+  name: string
+  type?: ConfigurableOption['type']
+  required?: boolean
+  status?: ConfigurableOption['status']
+  sortOrder?: number
+  values?: Array<{ label: string; priceModifier?: string; sortOrder?: number }>
+}
+
+export const OPTION_TYPE_LABELS: Record<string, string> = {
+  SELECT: 'Lista suspensa',
+  RADIO: 'Escolha única',
+  CHECKBOX: 'Caixa de seleção',
+  NUMBER: 'Número',
+  TEXT: 'Texto',
+}
+
 export const productsApi = {
   // Categories
   listCategories: () =>
@@ -107,6 +143,9 @@ export const productsApi = {
   delete: (id: string) =>
     api.delete(`/admin/products/${id}`).then((r) => r.data),
 
+  duplicate: (id: string) =>
+    api.post(`/admin/products/${id}/duplicate`).then((r) => r.data?.data ?? r.data),
+
   // Plans
   listPlans: (productId?: string) =>
     api.get('/admin/plans', { params: productId ? { productId } : undefined }).then((r) => r.data),
@@ -135,6 +174,19 @@ export const productsApi = {
 
   deleteAddon: (id: string) =>
     api.delete(`/admin/addons/${id}`).then((r) => r.data),
+
+  // Configurable options
+  listOptions: (productId: string) =>
+    api.get(`/admin/products/${productId}/options`).then((r) => r.data),
+
+  createOption: (productId: string, data: ConfigurableOptionInput) =>
+    api.post(`/admin/products/${productId}/options`, data).then((r) => r.data),
+
+  updateOption: (optionId: string, data: Partial<ConfigurableOptionInput>) =>
+    api.patch(`/admin/products/options/${optionId}`, data).then((r) => r.data),
+
+  deleteOption: (optionId: string) =>
+    api.delete(`/admin/products/options/${optionId}`).then((r) => r.data),
 }
 
 export const CYCLE_LABELS: Record<string, string> = {
